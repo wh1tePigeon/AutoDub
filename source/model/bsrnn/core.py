@@ -10,11 +10,7 @@ from .makestim import (
     MaskEstimationModule,
     OverlappingMaskEstimationModule
 )
-from .tfmodel import (
-    ConvolutionalTimeFreqModule,
-    SeqBandModellingModule,
-    TransformerTimeFreqModule
-)
+from .tfmodel import SeqBandModellingModule
 
 
 class MultiMaskBandSplitCoreBase(BandsplitCoreBase):
