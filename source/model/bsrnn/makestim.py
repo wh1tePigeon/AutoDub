@@ -123,37 +123,7 @@ class NormMLP(BaseNormMLP):
         return mb
 
 
-class MultAddNormMLP(NormMLP):
-    def __init__(self, emb_dim: int, mlp_dim: int, bandwidth: int, in_channel: int | None, hidden_activation: str = "Tanh", hidden_activation_kwargs=None, complex_mask: bool = True) -> None:
-        super().__init__(emb_dim, mlp_dim, bandwidth, in_channel, hidden_activation, hidden_activation_kwargs, complex_mask)
-
-        self.output2 = torch.jit.script(
-                nn.Sequential(
-                        nn.Linear(
-                                in_features=mlp_dim,
-                                out_features=bandwidth * in_channel * self.reim * 2,
-                        ),
-                        nn.GLU(dim=-1),
-                )
-        )
-
-    def forward(self, qb):
-
-        qb = self.norm(qb)  # (batch, n_time, emb_dim)
-        qb = self.hidden(qb)  # (batch, n_time, mlp_dim)
-        mmb = self.output(qb)  # (batch, n_time, bandwidth * in_channel * reim)
-        mmb = self.reshape_output(mmb)  # (batch, in_channel, bandwidth, n_time)
-        amb = self.output2(qb)  # (batch, n_time, bandwidth * in_channel * reim)
-        amb = self.reshape_output(amb)  # (batch, in_channel, bandwidth, n_time)
-
-        return mmb, amb
-
-
-class MaskEstimationModuleSuperBase(nn.Module):
-    pass
-
-
-class MaskEstimationModuleBase(MaskEstimationModuleSuperBase):
+class MaskEstimationModuleBase(nn.Module):
     def __init__(
             self,
             band_specs: List[Tuple[float, float]],
