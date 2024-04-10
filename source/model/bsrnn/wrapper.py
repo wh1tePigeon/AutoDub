@@ -65,8 +65,6 @@ class _SpectralComponent(nn.Module):
         )
 
 
-#import pytorch_lightning as pl
-
 def get_band_specs(band_specs, n_fft, fs, n_bands=None):
     if band_specs in ["dnr:speech", "dnr:vox7", "musdb:vocals", "musdb:vox7"]:
         bsm = VocalBandsplitSpecification(
