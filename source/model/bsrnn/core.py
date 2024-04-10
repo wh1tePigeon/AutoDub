@@ -82,44 +82,23 @@ class MultiMaskBandSplitCoreBase(BandsplitCoreBase):
         if overlapping_band:
             assert freq_weights is not None
             assert n_freq is not None
-
-            if mult_add_mask:
-
-                self.mask_estim = nn.ModuleDict(
-                        {
-                                stem: MultAddMaskEstimationModule(
-                                        band_specs=band_specs,
-                                        freq_weights=freq_weights,
-                                        n_freq=n_freq,
-                                        emb_dim=emb_dim,
-                                        mlp_dim=mlp_dim,
-                                        in_channel=in_channel,
-                                        hidden_activation=hidden_activation,
-                                        hidden_activation_kwargs=hidden_activation_kwargs,
-                                        complex_mask=complex_mask,
-                                        use_freq_weights=use_freq_weights,
-                                )
-                                for stem in stems
-                        }
-                )
-            else:
-                self.mask_estim = nn.ModuleDict(
-                        {
-                                stem: OverlappingMaskEstimationModule(
-                                        band_specs=band_specs,
-                                        freq_weights=freq_weights,
-                                        n_freq=n_freq,
-                                        emb_dim=emb_dim,
-                                        mlp_dim=mlp_dim,
-                                        in_channel=in_channel,
-                                        hidden_activation=hidden_activation,
-                                        hidden_activation_kwargs=hidden_activation_kwargs,
-                                        complex_mask=complex_mask,
-                                        use_freq_weights=use_freq_weights,
-                                )
-                                for stem in stems
-                        }
-                )
+            self.mask_estim = nn.ModuleDict(
+                    {
+                            stem: OverlappingMaskEstimationModule(
+                                    band_specs=band_specs,
+                                    freq_weights=freq_weights,
+                                    n_freq=n_freq,
+                                    emb_dim=emb_dim,
+                                    mlp_dim=mlp_dim,
+                                    in_channel=in_channel,
+                                    hidden_activation=hidden_activation,
+                                    hidden_activation_kwargs=hidden_activation_kwargs,
+                                    complex_mask=complex_mask,
+                                    use_freq_weights=use_freq_weights,
+                            )
+                            for stem in stems
+                    }
+            )
         else:
             self.mask_estim = nn.ModuleDict(
                     {
