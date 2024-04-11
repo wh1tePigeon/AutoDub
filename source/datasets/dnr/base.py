@@ -1,17 +1,16 @@
-import os
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import numpy as np
 import pedalboard as pb
 import torch
 import torchaudio as ta
-from torch.utils import data
+from torch.utils.data import Dataset
 
-from ._types import AudioDict, DataDict
+from ._types import AudioDict
 
 
-class BaseSourceSeparationDataset(data.Dataset, ABC):
+class BaseSourceSeparationDataset(Dataset, ABC):
     def __init__(
             self, split: str,
             stems: List[str],
