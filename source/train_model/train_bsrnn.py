@@ -25,22 +25,22 @@ np.random.seed(SEED)
 CONFIG_BSRNN_PATH = CONFIGS_PATH / 'bsrnn'
 
 @hydra.main(config_path=CONFIG_BSRNN_PATH, config_name="main")
-def main(clf: DictConfig):
-    dataloaders = get_dataloaders(clf["data"])
+def main(cfg: DictConfig):
+    dataloaders = get_dataloaders(cfg["data"])
 
-    model = instantiate(clf["arch"])
+    model = instantiate(cfg["arch"])
 
     logger = get_logger("train")
     logger.info(model)
 
     # prepare for (multi-device) GPU training
-    device, device_ids = prepare_device(clf["n_gpu"])
+    device, device_ids = prepare_device(cfg["n_gpu"])
     model = model.to(device)
     if len(device_ids) > 1:
         model = torch.nn.DataParallel(model, device_ids=device_ids)
 
     # get function handles of loss and metrics
-    loss_module = instantiate(clf["loss"]).to(device)
+    loss_module = instantiate(cfg["loss"]).to(device)
     metrics = [
         #config.init_obj(metric_dict, module_metric, text_encoder=text_encoder)
         #for metric_dict in config["metrics"]
@@ -49,20 +49,20 @@ def main(clf: DictConfig):
     # build optimizer, learning rate scheduler. delete every line containing lr_scheduler for
     # disabling scheduler
     trainable_params = filter(lambda p: p.requires_grad, model.parameters())
-    optimizer = instantiate(clf["optimizer"], trainable_params)
-    scheduler = instantiate(clf["scheduler"], optimizer)
+    optimizer = instantiate(cfg["optimizer"], trainable_params)
+    scheduler = instantiate(cfg["scheduler"], optimizer)
 
     trainer = Trainer(
         model,
         loss_module,
         metrics,
         optimizer=optimizer,
-        config=clf,
+        config=cfg,
         device=device,
-        log_step=clf["trainer"].get("log_step", 100),
+        log_step=cfg["trainer"].get("log_step", 100),
         dataloader=dataloaders,
         scheduler=scheduler,
-        len_epoch=clf["trainer"].get("len_epoch", None),
+        len_epoch=cfg["trainer"].get("len_epoch", None),
     )
 
     trainer.train()
