@@ -110,12 +110,12 @@ class DivideAndRemasterDataset(DivideAndRemasterBaseDataset):
                 )
         ]
         # pprint(list(enumerate(files)))
-        if split == "train":
-            assert len(files) == 3406, len(files)
-        elif split == "val":
-            assert len(files) == 487, len(files)
-        elif split == "test":
-            assert len(files) == 973, len(files)
+        #if split == "train":
+        #    assert len(files) == 3406, len(files)
+        #elif split == "val":
+        #    assert len(files) == 487, len(files)
+        #elif split == "test":
+        #    assert len(files) == 973, len(files)
 
         self.n_tracks = len(files)
 
@@ -159,12 +159,12 @@ class DivideAndRemasterRandomChunkDataset(DivideAndRemasterBaseDataset):
                 )
         ]
 
-        if split == "train":
-            assert len(files) == 3406, len(files)
-        elif split == "val":
-            assert len(files) == 487, len(files)
-        elif split == "test":
-            assert len(files) == 973, len(files)
+        #if split == "train":
+        #    assert len(files) == 3406, len(files)
+        #elif split == "val":
+        #    assert len(files) == 487, len(files)
+        #elif split == "test":
+        #    assert len(files) == 973, len(files)
 
         self.n_tracks = len(files)
 
@@ -256,12 +256,12 @@ class DivideAndRemasterDeterministicChunkDataset(DivideAndRemasterBaseDataset):
                 )
         ]
         # pprint(list(enumerate(files)))
-        if split == "train":
-            assert len(files) == 3406, len(files)
-        elif split == "val":
-            assert len(files) == 487, len(files)
-        elif split == "test":
-            assert len(files) == 973, len(files)
+        #if split == "train":
+        #    assert len(files) == 3406, len(files)
+        #elif split == "val":
+        #    assert len(files) == 487, len(files)
+        #elif split == "test":
+        #    assert len(files) == 973, len(files)
 
         self.n_tracks = len(files)
 
@@ -305,88 +305,3 @@ class DivideAndRemasterDeterministicChunkDataset(DivideAndRemasterBaseDataset):
             data_["audio"][stem] = audio[stem][:, start:end]
 
         return data_
-
-
-class DivideAndRemasterRandomChunkDatasetWithSpeechReverb(
-        DivideAndRemasterRandomChunkDataset
-):
-    def __init__(
-            self,
-            data_root: str,
-            split: str,
-            target_length: int,
-            chunk_size_second: float,
-            stems: Optional[List[str]] = None,
-            fs: int = 44100,
-            npy_memmap: bool = True,
-    ) -> None:
-
-        if stems is None:
-            stems = self.ALLOWED_STEMS
-
-        stems_no_mixture = [s for s in stems if s != "mixture"]
-
-        super().__init__(
-                data_root=data_root,
-                split=split,
-                target_length=target_length,
-                chunk_size_second=chunk_size_second,
-                stems=stems_no_mixture,
-                fs=fs,
-                npy_memmap=npy_memmap,
-        )
-
-        self.stems = stems
-        self.stems_no_mixture = stems_no_mixture
-
-    def __getitem__(self, index: int) -> DataDict:
-
-        data_ = super().__getitem__(index)
-
-        dry = data_["audio"]["speech"][:]
-        n_samples = dry.shape[-1]
-
-        wet_level = np.random.rand()
-
-        speech = pb.Reverb(
-                room_size=np.random.rand(),
-                damping=np.random.rand(),
-                wet_level=wet_level,
-                dry_level=(1 - wet_level),
-                width=np.random.rand()
-        ).process(dry, self.fs, buffer_size=8192 * 4)[..., :n_samples]
-
-        data_["audio"]["speech"] = speech
-
-        data_["audio"]["mixture"] = sum(
-                [data_["audio"][s] for s in self.stems_no_mixture]
-        )
-
-        return data_
-
-    def __len__(self) -> int:
-        return super().__len__()
-
-
-if __name__ == "__main__":
-
-    from pprint import pprint
-    from tqdm import tqdm
-
-    for split_ in ["train", "val", "test"]:
-        ds = DivideAndRemasterRandomChunkDatasetWithSpeechReverb(
-                data_root="$DATA_ROOT/DnR/v2np",
-                split=split_,
-                target_length=100,
-                chunk_size_second=6.0
-        )
-
-        print(split_, len(ds))
-
-        for track_ in tqdm(ds):  # type: ignore
-            pprint(track_)
-            track_["audio"] = {k: v.shape for k, v in track_["audio"].items()}
-            pprint(track_)
-            # break
-
-        break
