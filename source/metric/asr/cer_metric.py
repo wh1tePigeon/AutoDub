@@ -5,7 +5,7 @@ from torch import Tensor
 
 from source.base.base_metric import BaseMetric
 from source.base.base_text_encoder import BaseTextEncoder
-from source.metric.utils import calc_cer
+from .utils import calc_cer
 
 
 class ArgmaxCERMetric(BaseMetric):
