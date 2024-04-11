@@ -17,3 +17,7 @@ pillow
 hydra-core
 gdown
 spafe
+fire
+pedalboard
+asteroid
+torchmetrics
