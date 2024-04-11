@@ -31,14 +31,12 @@ class Trainer(BaseTrainer):
             config,
             device,
             dataloaders,
-            text_encoder,
             lr_scheduler=None,
             len_epoch=None,
             skip_oom=True,
     ):
         super().__init__(model, criterion, metrics, optimizer, config, device)
         self.skip_oom = skip_oom
-        self.text_encoder = text_encoder
         self.config = config
         self.train_dataloader = dataloaders["train"]
         if len_epoch is None:
@@ -64,7 +62,7 @@ class Trainer(BaseTrainer):
         """
         Move all necessary tensors to the HPU
         """
-        for tensor_for_gpu in ["spectrogram", "text_encoded"]:
+        for tensor_for_gpu in ["spectrogram"]:
             batch[tensor_for_gpu] = batch[tensor_for_gpu].to(device)
         return batch
 
@@ -114,8 +112,6 @@ class Trainer(BaseTrainer):
                 self.writer.add_scalar(
                     "learning rate", self.lr_scheduler.get_last_lr()[0]
                 )
-                self._log_predictions(**batch)
-                self._log_spectrogram(batch["spectrogram"])
                 self._log_scalars(self.train_metrics)
                 # we don't want to reset train metrics at the start of every epoch
                 # because we are interested in recent train metrics
@@ -135,6 +131,8 @@ class Trainer(BaseTrainer):
         batch = self.move_batch_to_device(batch, self.device)
         if is_train:
             self.optimizer.zero_grad()
+        
+        
         outputs = self.model(**batch)
         if type(outputs) is dict:
             batch.update(outputs)

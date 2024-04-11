@@ -42,6 +42,7 @@ def main(cfg: DictConfig):
     # get function handles of loss and metrics
     loss_module = instantiate(cfg["loss"]).to(device)
     metrics = [
+        instantiate(m) for m in cfg["metrics"]
         #config.init_obj(metric_dict, module_metric, text_encoder=text_encoder)
         #for metric_dict in config["metrics"]
     ]
