@@ -10,7 +10,7 @@ from hydra.utils import instantiate
 from omegaconf import DictConfig
 
 from ..trainer import Trainer
-from ..utils import get_logger, prepare_device
+from ..utils import get_logger, prepare_device, CONFIGS_PATH
 from ..utils.object_loading import get_dataloaders
 
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -22,8 +22,9 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 np.random.seed(SEED)
 
+CONFIG_BSRNN_PATH = CONFIGS_PATH / 'bsrnn'
 
-@hydra.main(config_path="tts/configs", config_name="main_config")
+@hydra.main(config_path=CONFIG_BSRNN_PATH, config_name="main")
 def main(clf: DictConfig):
     dataloaders = get_dataloaders(clf["data"])
 

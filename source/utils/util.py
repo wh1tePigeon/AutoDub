@@ -6,8 +6,9 @@ from pathlib import Path
 import pandas as pd
 import torch
 
-ROOT_PATH = Path(__file__).absolute().resolve().parent.parent.parent
-
+SOURCE_PATH = Path(__file__).absolute().resolve().parent.parent
+ROOT_PATH = SOURCE_PATH.parent
+CONFIGS_PATH = SOURCE_PATH / 'configs'
 
 def ensure_dir(dirname):
     dirname = Path(dirname)
