@@ -1,4 +1,4 @@
-from .dataset import (DivideAndRemasterDataset,
+from .dnr.dataset import (DivideAndRemasterDataset,
                       DivideAndRemasterDeterministicChunkDataset,
                       )
 

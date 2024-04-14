@@ -105,6 +105,7 @@ data/
 input/
 saved/
 wandb/
+.hydra
 
 # editor, os cache directory
 .vscode/
