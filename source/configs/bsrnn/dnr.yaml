@@ -1,0 +1,21 @@
+train:
+  batch_size: 2
+  num_workers: 8
+  datasets:
+    - _target_: source.datasets.dnr.DivideAndRemasterRandomChunkDataset
+      data_root: "$DATA_ROOT/DnR/v2"
+      split: "train"
+      target_length: 20000
+      chunk_size_second: 6.0
+      fs: 44100
+
+val:
+  batch_size: 2
+  num_workers: 8
+  datasets:
+    - _target_: source.datasets.dnr.DivideAndRemasterDeterministicChunkDataset
+      data_root: "$DATA_ROOT/DnR/v2"
+      split: "val"
+      chunk_size_second: 6.0
+      hop_size_second: 3.0
+      fs: 44100

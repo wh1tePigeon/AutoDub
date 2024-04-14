@@ -11,7 +11,6 @@ from torchvision.transforms import ToTensor
 from tqdm import tqdm
 
 from source.base import BaseTrainer
-from source.logger.utils import plot_spectrogram_to_buf
 from source.utils import inf_loop, MetricTracker
 
 
@@ -19,6 +18,9 @@ class Trainer(BaseTrainer):
     """
     Trainer class
     """
+    
+    _VOX_STEMS = ["speech", "vocals"]
+    _BG_STEMS = ["background", "effects", "mne"]
 
     def __init__(
             self,
@@ -127,22 +129,12 @@ class Trainer(BaseTrainer):
 
     def process_batch(self, batch, is_train: bool, metrics: MetricTracker):
         batch = self.move_batch_to_device(batch, self.device)
+
+        batch, output = self.model(batch)
+        batch["loss"] = self.criterion(batch, output)
+
         if is_train:
             self.optimizer.zero_grad()
-        
-        
-        outputs = self.model(**batch)
-        if type(outputs) is dict:
-            batch.update(outputs)
-        else:
-            batch["logits"] = outputs
-
-        batch["log_probs"] = F.log_softmax(batch["logits"], dim=-1)
-        batch["log_probs_length"] = self.model.transform_input_lengths(
-            batch["spectrogram_length"]
-        )
-        batch["loss"] = self.criterion(**batch)
-        if is_train:
             batch["loss"].backward()
             self._clip_grad_norm()
             self.optimizer.step()
@@ -150,8 +142,6 @@ class Trainer(BaseTrainer):
                 self.lr_scheduler.step()
 
         metrics.update("loss", batch["loss"].item())
-        for met in self.metrics:
-            metrics.update(met.name, met(**batch))
         return batch
 
     def _evaluation_epoch(self, epoch, part, dataloader):
@@ -176,8 +166,6 @@ class Trainer(BaseTrainer):
                 )
             self.writer.set_step(epoch * self.len_epoch, part)
             self._log_scalars(self.evaluation_metrics)
-            self._log_predictions(**batch)
-            self._log_spectrogram(batch["spectrogram"])
 
         # add histogram of model parameters to the tensorboard
         for name, p in self.model.named_parameters():

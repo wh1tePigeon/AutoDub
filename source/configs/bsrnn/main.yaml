@@ -1,15 +1,13 @@
 defaults:
-  - arch: RawNet
-  # - augmentations: base_augmentations
-  - data: tts_dataset
-  - loss: tts_loss
-  - scheduler: LRStep
-  - collate: main_collate
-  - metrics: base_metrics
-  - preprocessing: base_preprocessing
-  - trainer: base_trainer
-  - optimizer: Adam
+  - arch: model_conf
+  - data: dnr
+  - loss: loss_conf
+  - scheduler: scheduler_conf
+  - metrics: metrics_conf
+  - preprocessing: preprocessing_conf
+  - trainer: trainer_conf
+  - optimizer: optimizer_conf
 
-name: base_config
+name: main
 n_gpu: 1
 checkpoint:

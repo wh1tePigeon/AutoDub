@@ -1,0 +1,8 @@
+- _target_: source.metric.bsrnn.ScaleInvariantSignalNoiseRatio
+  name: SI-SNR Metric
+
+- _target_: source.metric.bsrnn.SignalNoiseRatio
+  name: SNR Metric
+
+#- _target_: source.metric.bsrnn.SafeSignalDistortionRatio
+#  name: SDR Metric
