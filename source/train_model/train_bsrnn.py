@@ -26,7 +26,7 @@ np.random.seed(SEED)
 
 CONFIG_BSRNN_PATH = CONFIGS_PATH / 'bsrnn'
 
-@hydra.main(config_path=CONFIG_BSRNN_PATH, config_name="main")
+@hydra.main(config_path=str(CONFIG_BSRNN_PATH), config_name="main")
 def train(cfg: DictConfig):
     dataloaders = get_dataloaders(cfg["data"])
 
@@ -72,6 +72,4 @@ def train(cfg: DictConfig):
 
 
 if __name__ == "__main__":
-    import fire
-
-    fire.Fire(train)
+    train()
