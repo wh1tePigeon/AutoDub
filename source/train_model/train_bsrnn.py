@@ -31,7 +31,6 @@ def train(cfg: DictConfig):
     dataloaders = get_dataloaders(cfg["data"])
 
     model = instantiate(cfg["arch"])
-    print("kurwa")
     logger = get_logger("train")
     logger.info(model)
 

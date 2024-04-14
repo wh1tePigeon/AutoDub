@@ -1,4 +1,4 @@
-_target_: source.loss.bsrnn.TimeFreqSignalNoisePNormRatioLoss
+_target_: source.loss.bsrnn._timefreq.TimeFreqSignalNoisePNormRatioLoss
 
 kwargs:
   tkwargs:

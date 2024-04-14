@@ -2,7 +2,7 @@ from operator import xor
 
 from hydra.utils import instantiate
 from torch.utils.data import ConcatDataset, DataLoader
-
+import source.datasets.dnr
 
 def get_dataloaders(cfg):
     dataloaders = {}
@@ -39,7 +39,8 @@ def get_dataloaders(cfg):
 
         # create dataloader
         dataloader = DataLoader(
-            dataset, batch_size=bs, shuffle=shuffle, num_workers=num_workers,
+            dataset, batch_size=bs,
+            shuffle=shuffle, num_workers=num_workers,
             batch_sampler=batch_sampler, drop_last=drop_last
         )
         dataloaders[split] = dataloader

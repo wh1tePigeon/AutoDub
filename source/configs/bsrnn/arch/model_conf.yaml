@@ -1,4 +1,4 @@
-_target_: source.model.MultiMaskMultiSourceBandSplitRNN
+_target_: source.model.bsrnn.wrapper.MultiMaskMultiSourceBandSplitRNN
 
 in_channel: 1
 stems: [ 'speech', 'music', 'effects' ]

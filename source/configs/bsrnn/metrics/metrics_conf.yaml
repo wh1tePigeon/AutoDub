@@ -1,7 +1,7 @@
-- _target_: source.metric.bsrnn.ScaleInvariantSignalNoiseRatio
+- _target_: torchmetrics.ScaleInvariantSignalNoiseRatio
   name: SI-SNR Metric
 
-- _target_: source.metric.bsrnn.SignalNoiseRatio
+- _target_: torchmetrics.SignalNoiseRatio
   name: SNR Metric
 
 #- _target_: source.metric.bsrnn.SafeSignalDistortionRatio

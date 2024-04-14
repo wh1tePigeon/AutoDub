@@ -2,7 +2,7 @@ import unittest
 
 import torch
 
-from source.datasets import LibrispeechDataset, CustomDirAudioDataset, CustomAudioDataset
+from source.datasets.classic import LibrispeechDataset, CustomDirAudioDataset, CustomAudioDataset
 from source.tests.utils import clear_log_folder_after_use
 from source.text_encoder.ctc_char_text_encoder import CTCCharTextEncoder
 from source.utils import ROOT_PATH

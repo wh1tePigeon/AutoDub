@@ -3,7 +3,7 @@ import unittest
 from tqdm import tqdm
 
 from source.collate_fn.collate import collate_fn
-from source.datasets import LibrispeechDataset
+from source.datasets.dnr import LibrispeechDataset
 from source.tests.utils import clear_log_folder_after_use
 from source.utils.object_loading import get_dataloaders
 from source.utils.parse_config import ConfigParser
