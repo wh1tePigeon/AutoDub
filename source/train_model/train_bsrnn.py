@@ -2,16 +2,18 @@ import argparse
 import collections
 import itertools
 import warnings
-
+import sys
 import hydra
 import numpy as np
 import torch
 from hydra.utils import instantiate
 from omegaconf import DictConfig
 
-from ..trainer import Trainer
-from ..utils import get_logger, prepare_device, CONFIGS_PATH
-from ..utils.object_loading import get_dataloaders
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+#from ..trainer import Trainer
+from source.utils.util import get_logger, prepare_device, CONFIGS_PATH
+from source.utils.object_loading import get_dataloaders
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -25,24 +27,24 @@ np.random.seed(SEED)
 CONFIG_BSRNN_PATH = CONFIGS_PATH / 'bsrnn'
 
 @hydra.main(config_path=CONFIG_BSRNN_PATH, config_name="main")
-def main(config: DictConfig):
-    dataloaders = get_dataloaders(config["data"])
+def train(cfg: DictConfig):
+    dataloaders = get_dataloaders(cfg["data"])
 
-    model = instantiate(config["arch"])
-
+    model = instantiate(cfg["arch"])
+    print("kurwa")
     logger = get_logger("train")
     logger.info(model)
 
     # prepare for (multi-device) GPU training
-    device, device_ids = prepare_device(config["n_gpu"])
+    device, device_ids = prepare_device(cfg["n_gpu"])
     model = model.to(device)
     if len(device_ids) > 1:
         model = torch.nn.DataParallel(model, device_ids=device_ids)
 
     # get function handles of loss and metrics
-    loss_module = instantiate(config["loss"]).to(device)
+    loss_module = instantiate(cfg["loss"]).to(device)
     metrics = [
-        instantiate(m) for m in config["metrics"]
+        instantiate(m) for m in cfg["metrics"]
         #config.init_obj(metric_dict, module_metric, text_encoder=text_encoder)
         #for metric_dict in config["metrics"]
     ]
@@ -50,24 +52,26 @@ def main(config: DictConfig):
     # build optimizer, learning rate scheduler. delete every line containing lr_scheduler for
     # disabling scheduler
     trainable_params = filter(lambda p: p.requires_grad, model.parameters())
-    optimizer = instantiate(config["optimizer"], trainable_params)
-    scheduler = instantiate(config["scheduler"], optimizer)
+    optimizer = instantiate(cfg["optimizer"], trainable_params)
+    scheduler = instantiate(cfg["scheduler"], optimizer)
 
     trainer = Trainer(
         model,
         loss_module,
         metrics,
         optimizer=optimizer,
-        config=config,
+        config=cfg,
         device=device,
-        log_step=config["trainer"].get("log_step", 100),
+        log_step=cfg["trainer"].get("log_step", 100),
         dataloader=dataloaders,
         scheduler=scheduler,
-        len_epoch=config["trainer"].get("len_epoch", None),
+        len_epoch=cfg["trainer"].get("len_epoch", None),
     )
 
     trainer.train()
 
 
 if __name__ == "__main__":
-    main()
+    import fire
+
+    fire.Fire(train)
