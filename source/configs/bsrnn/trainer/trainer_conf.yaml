@@ -5,9 +5,7 @@ verbosity: 2
 monitor: min val_loss
 early_stop: 20
 visualize: wandb
-wandb_project: 
-wandb_name: 
-wandb_entity: 
+wandb_project: bsrnn
 len_epoch: 1000
 batch_acum: 1
 log_step: 50

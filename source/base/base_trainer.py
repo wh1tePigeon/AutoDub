@@ -1,11 +1,12 @@
 from abc import abstractmethod
-
+from datetime import datetime
+from pathlib import Path
 import torch
 from numpy import inf
-
+import os
 from source.base import BaseModel
 from source.logger import get_visualizer
-
+from source.utils import get_logger
 
 class BaseTrainer:
     """
@@ -15,12 +16,19 @@ class BaseTrainer:
     def __init__(self, model: BaseModel, criterion, metrics, optimizer, config, device):
         self.device = device
         self.config = config
-        self.logger = config.get_logger("trainer", config["trainer"]["verbosity"])
+        self.logger = get_logger("trainer", config["trainer"]["verbosity"])
 
         self.model = model
         self.criterion = criterion
         self.metrics = metrics
         self.optimizer = optimizer
+
+        path = Path(self.config["trainer"]["save_dir"]) / "models" / config[
+            "name"] / datetime.now().strftime(r"%m%d_%H%M%S")
+
+        os.makedirs(path, exist_ok=True)
+
+        self.checkpoint_dir = path
 
         # for interrupt saving
         self._last_epoch = 0
@@ -45,15 +53,14 @@ class BaseTrainer:
 
         self.start_epoch = 1
 
-        self.checkpoint_dir = config.save_dir
-
         # setup visualization writer instance
         self.writer = get_visualizer(
             config, self.logger, cfg_trainer["visualize"]
         )
 
-        if config.resume is not None:
-            self._resume_checkpoint(config.resume)
+        if config.checkpoint is not None:
+            print("Checkpoint:", config.checkpoint)
+            self._resume_checkpoint(config.checkpoint)
 
     @abstractmethod
     def _train_epoch(self, epoch):

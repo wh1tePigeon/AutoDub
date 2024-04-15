@@ -62,8 +62,8 @@ def train(cfg: DictConfig):
         config=cfg,
         device=device,
         log_step=cfg["trainer"].get("log_step", 100),
-        dataloader=dataloaders,
-        scheduler=scheduler,
+        dataloaders=dataloaders,
+        lr_scheduler=scheduler,
         len_epoch=cfg["trainer"].get("len_epoch", None),
     )
 
