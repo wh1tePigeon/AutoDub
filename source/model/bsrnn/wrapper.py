@@ -98,12 +98,12 @@ def get_band_specs(band_specs, n_fft, fs, n_bands=None):
     return bsm, freq_weights, overlapping_band
 
 
-class MultiMaskMultiSourceBandSplitRNN(_SpectralComponent):
+class MultiMaskMultiSourceBandSplitRNN(nn.Module):
     def __init__(
             self,
             in_channel: int,
             stems: List[str],
-            band_specs: Union[str, List[Tuple[float, float]]],
+            band_specs: Union[str, List[Tuple[float, float]]] = "musical",
             fs: int = 44100,
             require_no_overlap: bool = False,
             require_no_gap: bool = True,
@@ -136,20 +136,64 @@ class MultiMaskMultiSourceBandSplitRNN(_SpectralComponent):
             freeze_encoder: bool = False,
     ) -> None:
         super().__init__(
-                stems=stems,
-                band_specs=band_specs,
-                fs=fs,
-                n_fft=n_fft,
-                win_length=win_length,
-                hop_length=hop_length,
-                window_fn=window_fn,
-                wkwargs=wkwargs,
-                power=power,
-                center=center,
-                normalized=normalized,
-                pad_mode=pad_mode,
-                onesided=onesided,
-                n_bands=n_bands,
+                #stems=stems,
+                #band_specs=band_specs,
+                #fs=fs,
+                #n_fft=n_fft,
+                #win_length=win_length,
+                #hop_length=hop_length,
+                #window_fn=window_fn,
+                #wkwargs=wkwargs,
+                #power=power,
+                #center=center,
+                #normalized=normalized,
+                #pad_mode=pad_mode,
+                #onesided=onesided,
+                #_bands=n_bands,
+        )
+
+        assert power is None
+
+        window_fn = torch.__dict__[window_fn]
+
+        if isinstance(band_specs, str):
+            self.band_specs, self.freq_weights, self.overlapping_band = get_band_specs(
+                band_specs,
+                n_fft,
+                fs,
+                n_bands
+                )
+        self.stems = stems
+        
+        self.stft = (
+                ta.transforms.Spectrogram(
+                        n_fft=n_fft,
+                        win_length=win_length,
+                        hop_length=hop_length,
+                        pad_mode=pad_mode,
+                        pad=0,
+                        window_fn=window_fn,
+                        wkwargs=wkwargs,
+                        power=power,
+                        normalized=normalized,
+                        center=center,
+                        onesided=onesided,
+                )
+        )
+
+        self.istft = (
+                ta.transforms.InverseSpectrogram(
+                        n_fft=n_fft,
+                        win_length=win_length,
+                        hop_length=hop_length,
+                        pad_mode=pad_mode,
+                        pad=0,
+                        window_fn=window_fn,
+                        wkwargs=wkwargs,
+                        normalized=normalized,
+                        center=center,
+                        onesided=onesided,
+                )
         )
 
         self.bsrnn = MultiSourceMultiMaskBandSplitCoreRNN(
@@ -186,16 +230,6 @@ class MultiMaskMultiSourceBandSplitRNN(_SpectralComponent):
 
             for param in self.bsrnn.tf_model.parameters():
                 param.requires_grad = False
-
-        if isinstance(band_specs, str):
-            self.band_specs, self.freq_weights, self.overlapping_band = get_band_specs(
-                band_specs,
-                n_fft,
-                fs,
-                n_bands
-                )
-
-        self.stems = stems
 
     def forward(self, batch):
         # with torch.no_grad():
