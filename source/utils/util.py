@@ -10,6 +10,8 @@ import torch
 SOURCE_PATH = Path(__file__).absolute().resolve().parent.parent
 ROOT_PATH = SOURCE_PATH.parent
 CONFIGS_PATH = SOURCE_PATH / 'configs'
+CHECKPOINTS_DEFAULT_PATH = ROOT_PATH / 'checkpoints'
+OUTPUT_DEFAULT_PATH = ROOT_PATH / 'output'
 
 def ensure_dir(dirname):
     dirname = Path(dirname)
