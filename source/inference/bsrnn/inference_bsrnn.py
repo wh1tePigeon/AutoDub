@@ -38,12 +38,5 @@ def inference_bsrnn(cfg, input_path, output_path=BSRNN_OUTPUT_PATH):
                 os.path.mkdir(directory_save_file)
 
 
-
-
-            #target_audio, sample_rate = torchaudio.load(filepath)
-            #target_mel = wav_to_mel(target_audio)
-            #pred_audio = model.generator(target_mel).squeeze(0)
-            #torchaudio.save(directory_save / filename, pred_audio, sample_rate)
-
 if __name__ == "__main__":
     inference_bsrnn()
