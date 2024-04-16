@@ -49,6 +49,7 @@ def preprocess(
 
 
 if __name__ == "__main__":
-    import fire
+    #import fire
 
-    fire.Fire()
+    #fire.Fire()
+    preprocess("/home/comp/Рабочий стол/small", "/home/comp/Рабочий стол/small", 44100)

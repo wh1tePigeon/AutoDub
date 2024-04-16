@@ -28,7 +28,7 @@ CONFIG_BSRNN_PATH = CONFIGS_PATH / 'bsrnn'
 
 @hydra.main(config_path=str(CONFIG_BSRNN_PATH), config_name="main")
 def train(cfg: DictConfig):
-    dataloaders = get_dataloaders(cfg["data"])
+    dataloaders = get_dataloaders(cfg["dataset"])
 
     model = instantiate(cfg["arch"])
     logger = get_logger("train")
