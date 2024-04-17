@@ -106,6 +106,9 @@ input/
 saved/
 wandb/
 .hydra
+.pth
+.ckpt
+.wav
 
 # editor, os cache directory
 .vscode/
