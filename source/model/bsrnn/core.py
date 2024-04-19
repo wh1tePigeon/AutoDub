@@ -19,7 +19,6 @@ class MultiMaskBandSplitCoreBase(BandsplitCoreBase):
 
     def forward(self, x, cond=None, compute_residual: bool = True):
         # x = complex spectrogram (batch, in_chan, n_freq, n_time)
-        # print(x.shape)
         batch, in_chan, n_freq, n_time = x.shape
         x = torch.reshape(x, (-1, 1, n_freq, n_time))
 
