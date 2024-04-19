@@ -104,9 +104,9 @@ ENV/
 data/
 saved/
 wandb/
-.hydra
-.pth
-.ckpt
+*.hydra
+*.pth
+*.ckpt
 *.wav
 
 # editor, os cache directory

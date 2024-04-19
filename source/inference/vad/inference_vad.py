@@ -55,17 +55,26 @@ def inference_vad(cfg):
                 filepath = os.path.join(directory_save_file, "changed.wav")
                 ta.save(filepath, audio, 16000)
 
+            # apply vad
             vad = VAD.from_hparams(source="speechbrain/vad-crdnn-libriparty",
                                    savedir=cfg["checkpoint dir"])
 
-            boundaries = vad.get_speech_segments(audio_file=filepath)
+            boundaries = vad.get_speech_segments(audio_file=filepath, apply_energy_VAD=False)
+            #                                     apply_energy_VAD=True,
+            #                                     activation_th=cfg["activation_th"],
+            #                                     deactivation_th=cfg["deactivation_th"],
+            #                                     close_th=cfg["close_th"],
+            #                                     len_th=cfg["len_th"])
+
+            # somehow this works better ¯\_(ツ)_/¯
             boundaries = vad.energy_VAD(filepath, boundaries,
                                         activation_th=cfg["activation_th"],
                                         deactivation_th=cfg["deactivation_th"])
             boundaries = vad.merge_close_segments(boundaries, close_th=cfg["close_th"])
             boundaries = vad.remove_short_segments(boundaries, len_th=cfg["len_th"])
 
-            vad.save_boundaries(boundaries, audio_file=filepath)
+            path_to_log_file = os.path.join(directory_save_file, "vad_result.txt")
+            vad.save_boundaries(boundaries, audio_file=filepath, save_path=path_to_log_file)
 
 
 
