@@ -1,5 +1,7 @@
-from source.augmentations.wave_augmentations.Gain import Gain
+from source.augmentations.wave_augmentations.augmentations import Gain, AddColoredNoise, PitchShift
 
 __all__ = [
-    "Gain"
+    "Gain",
+    "AddColoredNoise",
+    "PitchShift"
 ]

@@ -5,23 +5,19 @@ from torch import Tensor
 
 from source.base.base_metric import BaseMetric
 from source.base.base_text_encoder import BaseTextEncoder
-from .utils import calc_wer
+from source.metric.asr.utils import calc_wer, decode_text
 
 
-class ArgmaxWERMetric(BaseMetric):
-    def __init__(self, text_encoder: BaseTextEncoder, *args, **kwargs):
+class WERMetric(BaseMetric):
+    def __init__(self, text_encoder: BaseTextEncoder, inference_type: str, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.text_encoder = text_encoder
+        self.inference_type = inference_type
+        self.encoder_method = getattr(text_encoder, inference_type)
 
     def __call__(self, log_probs: Tensor, log_probs_length: Tensor, text: List[str], **kwargs):
+        predicted_texts = decode_text(self.encoder_method, self.inference_type, log_probs, log_probs_length, **self.kwargs)
         wers = []
-        predictions = torch.argmax(log_probs.cpu(), dim=-1).numpy()
-        lengths = log_probs_length.detach().numpy()
-        for log_prob_vec, length, target_text in zip(predictions, lengths, text):
+        for pred_text, target_text in zip(predicted_texts, text):
             target_text = BaseTextEncoder.normalize_text(target_text)
-            if hasattr(self.text_encoder, "ctc_decode"):
-                pred_text = self.text_encoder.ctc_decode(log_prob_vec[:length])
-            else:
-                pred_text = self.text_encoder.decode(log_prob_vec[:length])
             wers.append(calc_wer(target_text, pred_text))
-        return sum(wers) / len(wers)
+        return sum(wers) / len(wers) * 100

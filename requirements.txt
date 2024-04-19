@@ -10,6 +10,7 @@ numpy
 pandas
 pedalboard
 pillow
+pyctcdecode
 speechbrain
 tensorboard
 torch
