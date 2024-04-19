@@ -14,7 +14,7 @@ BSRNN_CHECKPOINT_PATH = CHECKPOINTS_DEFAULT_PATH / 'bsrnn' / 'main.pth'
 BSRNN_OUTPUT_PATH = OUTPUT_DEFAULT_PATH / 'bsrnn'
 INPUT_PATH = "/home/comp/Рабочий стол/AutoDub/input"
 
-@hydra.main(config_path=str(CONFIG_BSRNN_PATH), config_name="main", version_base="1.1")
+@hydra.main(config_path=str(CONFIG_BSRNN_PATH), config_name="main")
 def inference_bsrnn(cfg):
     device, device_ids = prepare_device(cfg["n_gpu"])
     model = instantiate(cfg["arch"])

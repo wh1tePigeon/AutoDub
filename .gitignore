@@ -107,7 +107,7 @@ wandb/
 .hydra
 .pth
 .ckpt
-.wav
+*.wav
 
 # editor, os cache directory
 .vscode/
