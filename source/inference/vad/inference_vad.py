@@ -4,23 +4,6 @@ from speechbrain.inference.VAD import VAD
 import hydra
 import os
 
-def vad():
-    #vad1 = VAD.from_hparams(
-    #    source="speechbrain/vad-crdnn-libriparty",
-    #    savedir=OUTPUT,
-    #)
-
-    audio, fs = ta.load("/home/comp/Рабочий стол/AutoDub/input/resample.wav")
-    signal = torch.mean(audio, dim=0, keepdim=True)
-    ta.save("/home/comp/Рабочий стол/AutoDub/input/single.wav", signal, 16000)
-    #if fs != 16000:
-    #    transofrm = ta.transforms.Resample(fs, 16000)
-    #    audio = transofrm(audio)
-    #    ta.save("/home/comp/Рабочий стол/AutoDub/input/resample.wav", audio, 16000)
-
-    #boundaries = vad1.get_speech_segments("/home/comp/Рабочий стол/AutoDub/input/resample.wav")
-    # Print the output
-    #vad1.save_boundaries(boundaries)
 
 #@hydra.main(config_path=str(CONFIG_VAD_PATH), config_name="main")
 def inference_vad(cfg):
@@ -75,7 +58,6 @@ def inference_vad(cfg):
 
             path_to_log_file = os.path.join(directory_save_file, "vad_result.txt")
             vad.save_boundaries(boundaries, audio_file=filepath, save_path=path_to_log_file)
-
 
 
 if __name__ == "__main__":
