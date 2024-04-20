@@ -1,8 +1,19 @@
-- _target_: torchmetrics.ScaleInvariantSignalNoiseRatio
-  name: SI-SNR Metric
+- _target_: source.metric.asr.wer_metric.WERMetric
+  name: WER (argmax)
+  inference_type: ctc_decode_enhanced
 
-- _target_: torchmetrics.SignalNoiseRatio
-  name: SNR Metric
+- _target_: source.metric.asr.cer_metric.CERMetric
+  name: CER (argmax)
+  inference_type: ctc_decode_enhanced
 
-#- _target_: source.metric.bsrnn.SafeSignalDistortionRatio
-#  name: SDR Metric
+- _target_: source.metric.asr.wer_metric.WERMetric
+  name: WER (beam_search)
+  only_val: true
+  inference_type: ctc_beam_search
+  beam_size: 5
+
+- _target_: source.metric.asr.cer_metric.CERMetric
+  name: CER (beam_search)
+  only_val: true
+  inference_type: ctc_beam_search
+  beam_size: 5

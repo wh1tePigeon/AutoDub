@@ -1,6 +1,6 @@
 defaults:
   - arch: model_conf
-  - dataset: dnr
+  - dataset: libri
   - loss: loss_conf
   - scheduler: scheduler_conf
   - metrics: metrics_conf
@@ -8,6 +8,6 @@ defaults:
   - trainer: trainer_conf
   - optimizer: optimizer_conf
 
-name: main
+name: deep_speech_2
 n_gpu: 1
 checkpoint:
