@@ -3,25 +3,23 @@ from typing import List, Callable
 import source.augmentations.spectrogram_augmentations
 import source.augmentations.wave_augmentations
 from source.augmentations.sequential import SequentialAugmentation
-from source.utils.parse_config import ConfigParser
+from omegaconf import DictConfig
+from hydra.utils import instantiate
 
 
-def from_configs(configs: ConfigParser):
+def from_configs(config: DictConfig):
     wave_augs = []
-    if "augmentations" in configs.config and "wave" in configs.config["augmentations"]:
-        for aug_dict in configs.config["augmentations"]["wave"]:
+    if "augmentations" in config and "wave" in config["augmentations"]:
+        for aug_dict in config["augmentations"]["wave"]:
             aug_dict = aug_dict.copy()
-            aug_dict["args"]["sample_rate"] = configs.config["preprocessing"]["sr"]
-            wave_augs.append(
-                configs.init_obj(aug_dict, source.augmentations.wave_augmentations)
-            )
+            aug_dict["args"]["sample_rate"] = config["preprocessing"]["sr"]
+            wave_augs.append(instantiate(aug_dict))
 
     spec_augs = []
-    if "augmentations" in configs.config and "spectrogram" in configs.config["augmentations"]:
-        for aug_dict in configs.config["augmentations"]["spectrogram"]:
-            spec_augs.append(
-                configs.init_obj(aug_dict, source.augmentations.spectrogram_augmentations)
-            )
+    if "augmentations" in config and "spectrogram" in config["augmentations"]:
+        for aug_dict in config["augmentations"]["spectrogram"]:
+            spec_augs.append(instantiate(aug_dict))
+
     return _to_function(wave_augs), _to_function(spec_augs)
 
 

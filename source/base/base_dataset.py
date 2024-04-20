@@ -7,9 +7,8 @@ import torch
 import torchaudio
 from torch import Tensor
 from torch.utils.data import Dataset
-
+from omegaconf import DictConfig
 from source.base.base_text_encoder import BaseTextEncoder
-from source.utils.parse_config import ConfigParser
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +18,7 @@ class BaseDataset(Dataset):
             self,
             index,
             text_encoder: BaseTextEncoder,
-            config_parser: ConfigParser,
+            log_spec=True,
             wave_augs=None,
             spec_augs=None,
             limit=None,
@@ -27,10 +26,9 @@ class BaseDataset(Dataset):
             max_text_length=None,
     ):
         self.text_encoder = text_encoder
-        self.config_parser = config_parser
         self.wave_augs = wave_augs
         self.spec_augs = spec_augs
-        self.log_spec = config_parser["preprocessing"]["log_spec"]
+        self.log_spec = log_spec
 
         self._assert_index_is_valid(index)
         index = self._filter_records_from_dataset(index, max_audio_length, max_text_length, limit)

@@ -1,0 +1,13 @@
+wave_augs:
+- _target_: source.augmentations.wave_augmentations.Gain
+  p: 0.7
+- _target_: source.augmentations.wave_augmentations.AddColoredNoise
+  p: 0.5
+- _target_: source.augmentations.wave_augmentations.PitchShift
+  p: 0.5
+
+spec_augs:
+- _target_: source.augmentations.spectrogram_augmentations.TimeStretch
+  p: 0.3
+  min_coef: 0.8
+  max_coef: 1.2

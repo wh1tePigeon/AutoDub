@@ -21,9 +21,9 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 np.random.seed(SEED)
 
-CONFIG_BSRNN_PATH = CONFIGS_PATH / 'asr'
+CONFIG_ASR_PATH = CONFIGS_PATH / 'asr'
 
-@hydra.main(config_path=str(CONFIG_BSRNN_PATH), config_name="main")
+@hydra.main(config_path=str(CONFIG_ASR_PATH), config_name="main")
 def train(cfg: DictConfig):
     text_encoder = cfg["dataset"]["train"]["datasets"][0]["text_encoder"]
     cfg["arch"]["n_class"] = len(text_encoder)
@@ -32,7 +32,7 @@ def train(cfg: DictConfig):
     logger = get_logger("train")
     logger.info(model)
 
-    dataloaders = get_dataloaders(cfg["dataset"])
+    dataloaders = get_dataloaders(cfg)
 
     # prepare for (multi-device) GPU training
     device, device_ids = prepare_device(cfg["n_gpu"])
