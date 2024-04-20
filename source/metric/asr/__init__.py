@@ -1,7 +1,7 @@
-from .cer_metric import ArgmaxCERMetric
-from .wer_metric import ArgmaxWERMetric
+from .cer_metric import CERMetric
+from .wer_metric import WERMetric
 
 __all__ = [
-    "ArgmaxWERMetric",
-    "ArgmaxCERMetric"
+    "WERMetric",
+    "CERMetric"
 ]

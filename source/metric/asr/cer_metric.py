@@ -5,7 +5,7 @@ from torch import Tensor
 
 from source.base.base_metric import BaseMetric
 from source.base.base_text_encoder import BaseTextEncoder
-from source.metric.asr.utils import calc_cer, decode_text
+from .utils import calc_cer, decode_text
 
 
 class CERMetric(BaseMetric):
