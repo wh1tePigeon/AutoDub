@@ -45,7 +45,7 @@ class BaseDataset(Dataset):
         return {
             "audio": audio_wave,
             "spectrogram": audio_spec,
-            "duration": audio_wave.size(1) / self.config_parser["preprocessing"]["sr"],
+            "duration": audio_wave.size(1) / self.cfg["preprocessing"]["sr"],
             "text": data_dict["text"],
             "text_encoded": self.text_encoder.encode(data_dict["text"]),
             "audio_path": audio_path,
@@ -61,7 +61,7 @@ class BaseDataset(Dataset):
     def load_audio(self, path):
         audio_tensor, sr = torchaudio.load(path)
         audio_tensor = audio_tensor[0:1, :]  # remove all channels but the first
-        target_sr = self.config_parser["preprocessing"]["sr"]
+        target_sr = self.cfg["preprocessing"]["sr"]
         if sr != target_sr:
             audio_tensor = torchaudio.functional.resample(audio_tensor, sr, target_sr)
         return audio_tensor
@@ -71,7 +71,7 @@ class BaseDataset(Dataset):
             if self.wave_augs is not None:
                 audio_tensor_wave = self.wave_augs(audio_tensor_wave)
             wave2spec = self.config_parser.init_obj(
-                self.config_parser["preprocessing"]["spectrogram"],
+                self.cfg["preprocessing"]["spectrogram"],
                 torchaudio.transforms,
             )
             audio_tensor_spec = wave2spec(audio_tensor_wave)

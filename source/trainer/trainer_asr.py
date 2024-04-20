@@ -55,13 +55,13 @@ class Trainer(BaseTrainer):
         self.n_batches_accumulation = config["trainer"].get("n_batches_accumulation", 1)
         self.beam_size = config["trainer"].get("beam_size", 100)
 
-        if "steps_per_epoch" in config["lr_scheduler"]["args"] and self.len_epoch is not None:
-            assert self.n_batches_accumulation * config["lr_scheduler"]["args"]["steps_per_epoch"] == self.len_epoch
-        if "T_max" in config["lr_scheduler"]["args"] and self.len_epoch is not None:
-            assert self.len_epoch * (self.epochs + 1) == config["lr_scheduler"]["args"]["T_max"]
+        if "steps_per_epoch" in config["scheduler"] and self.len_epoch is not None:
+            assert self.n_batches_accumulation * config["scheduler"]["steps_per_epoch"] == self.len_epoch
+        if "T_max" in config["scheduler"] and self.len_epoch is not None:
+            assert self.len_epoch * (self.epochs + 1) == config["scheduler"]["T_max"]
 
         self.train_metrics = MetricTracker(
-            "loss", "grad norm", *[m.name for m in self.metrics if not m.only_val], writer=self.writer
+            "loss", "grad norm", *[m.name for m in self.metrics], writer=self.writer
         )
         self.evaluation_metrics = MetricTracker(
             "loss", *[m.name for m in self.metrics], writer=self.writer

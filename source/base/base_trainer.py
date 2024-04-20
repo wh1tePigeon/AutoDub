@@ -1,34 +1,28 @@
 from abc import abstractmethod
-from datetime import datetime
-from pathlib import Path
+
 import torch
 from numpy import inf
-import os
-from source.base import BaseModel
+
 from source.logger import get_visualizer
-from source.utils import get_logger
+from source.utils.util import get_logger
+
 
 class BaseTrainer:
     """
     Base class for all trainers
     """
 
-    def __init__(self, model: BaseModel, criterion, metrics, optimizer, config, device):
+    def __init__(self, model, criterion, metrics, optimizer, lr_scheduler, config, device):
+        print(f'Use device: {device}')
         self.device = device
         self.config = config
-        self.logger = get_logger("trainer", config["trainer"]["verbosity"])
+        self.logger = get_logger("trainer")
 
         self.model = model
         self.criterion = criterion
         self.metrics = metrics
         self.optimizer = optimizer
-
-        path = Path(self.config["trainer"]["save_dir"]) / "models" / config[
-            "name"] / datetime.now().strftime(r"%m%d_%H%M%S")
-
-        os.makedirs(path, exist_ok=True)
-
-        self.checkpoint_dir = path
+        self.lr_scheduler = lr_scheduler
 
         # for interrupt saving
         self._last_epoch = 0
@@ -53,14 +47,20 @@ class BaseTrainer:
 
         self.start_epoch = 1
 
+        self.checkpoint_dir = cfg_trainer.save_dir
+
         # setup visualization writer instance
         self.writer = get_visualizer(
             config, self.logger, cfg_trainer["visualize"]
         )
 
-        if config.checkpoint is not None:
-            print("Checkpoint:", config.checkpoint)
-            self._resume_checkpoint(config.checkpoint)
+        if "resume" in cfg_trainer and cfg_trainer["resume"] is not None:
+            if cfg_trainer["from_pretrained"]:
+                print('Load pretrained model')
+                self._from_pretrained(cfg_trainer["resume"])
+            else:
+                print('Resume from checkpoint')
+                self._resume_checkpoint(cfg_trainer["resume"])
 
     @abstractmethod
     def _train_epoch(self, epoch):
@@ -135,6 +135,8 @@ class BaseTrainer:
 
             if epoch % self.save_period == 0 or best:
                 self._save_checkpoint(epoch, save_best=best, only_best=True)
+        # Save last checkpoint
+        self._save_checkpoint(epoch, save_best=False, only_best=False)
 
     def _save_checkpoint(self, epoch, save_best=False, only_best=False):
         """
@@ -149,6 +151,7 @@ class BaseTrainer:
             "epoch": epoch,
             "state_dict": self.model.state_dict(),
             "optimizer": self.optimizer.state_dict(),
+            "lr_scheduler": self.lr_scheduler.state_dict() if self.lr_scheduler is not None else None,
             "monitor_best": self.mnt_best,
             "config": self.config,
         }
@@ -160,6 +163,31 @@ class BaseTrainer:
             best_path = str(self.checkpoint_dir / "model_best.pth")
             torch.save(state, best_path)
             self.logger.info("Saving current best: model_best.pth ...")
+
+    def _from_pretrained(self, pretrained_path):
+        """
+        Start from saved checkpoints
+
+        :param pretrained_path: Checkpoint path to be resumed
+        """
+        pretrained_path = str(pretrained_path)
+        self.logger.info("Loading checkpoint: {} ...".format(pretrained_path))
+        checkpoint = torch.load(pretrained_path, self.device)
+        self.mnt_best = checkpoint["monitor_best"]
+
+        # load architecture params from checkpoint.
+        if checkpoint["config"]["arch"] != self.config["arch"]:
+            self.logger.warning(
+                "Warning: Architecture configuration given in config file is different from that "
+                "of checkpoint. This may yield an exception while state_dict is being loaded."
+            )
+        
+        # load optimizer state (accumulated gradients)
+        self.model.load_state_dict(checkpoint["state_dict"])
+
+        self.logger.info(
+            "Checkpoint loaded. Resume training from epoch {}".format(self.start_epoch)
+        )
 
     def _resume_checkpoint(self, resume_path):
         """
@@ -192,6 +220,8 @@ class BaseTrainer:
             )
         else:
             self.optimizer.load_state_dict(checkpoint["optimizer"])
+            if self.lr_scheduler is not None:
+                self.lr_scheduler.load_state_dict(checkpoint["lr_scheduler"])
 
         self.logger.info(
             "Checkpoint loaded. Resume training from epoch {}".format(self.start_epoch)

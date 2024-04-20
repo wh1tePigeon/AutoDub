@@ -58,7 +58,7 @@ def train(cfg: DictConfig):
 
     trainer = Trainer(
         model=model,
-        loss_module=loss_module,
+        criterion=loss_module,
         metrics=metrics,
         optimizer=optimizer,
         text_encoder=text_encoder,
