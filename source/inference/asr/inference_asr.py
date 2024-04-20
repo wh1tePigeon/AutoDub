@@ -58,7 +58,7 @@ def inference_asr(cfg):
 
 
 
-        with torch.inference_mode():
+        #with torch.inference_mode():
 
 
 
