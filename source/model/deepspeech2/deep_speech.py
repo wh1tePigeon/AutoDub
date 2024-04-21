@@ -194,7 +194,7 @@ class DeepSpeech2(BaseModel):
             rnn_hidden_size: int = 512,
             dropout_p: float = 0.1,
             activation: str = 'relu',
-            debug: bool = False
+            debug: bool = True
     ):
         super().__init__(n_feats=n_feats, n_class=n_class)
         self.debug = debug
