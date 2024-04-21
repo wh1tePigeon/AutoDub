@@ -108,6 +108,8 @@ wandb/
 *.pth
 *.ckpt
 *.wav
+*.txt
+*.srt
 
 # editor, os cache directory
 .vscode/
