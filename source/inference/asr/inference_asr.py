@@ -57,7 +57,7 @@ def inference_asr(cfg: DictConfig):
     filepath = cfg["paths"]["input"]
     directory_save = cfg["paths"]["output"]
     if os.path.isfile(filepath):
-        filename = os.path.splitext(filepath)[0]
+        filename = filepath.split(".")[0].split("/")[-1]
         directory_save_file = os.path.join(directory_save, filename)
 
         if not os.path.exists(directory_save_file):
@@ -84,7 +84,10 @@ def inference_asr(cfg: DictConfig):
 
         def transcribe_audio(audio_segment: torch.Tensor):
             with torch.inference_mode():
-                audio_segment_spec = ta.transforms.MelSpectrogram()(audio_segment)
+                wave2spec = ta.transforms.MelSpectrogram()
+                audio_segment_spec = wave2spec(audio_segment)
+                audio_segment_spec = torch.log(audio_segment_spec + 1e-5)
+
                 length = torch.Tensor([audio_segment_spec.shape[-1]]).type(torch.int)
                 audio_segment_spec = audio_segment_spec.to(device)
                 length = length.to(device)
@@ -96,20 +99,23 @@ def inference_asr(cfg: DictConfig):
                 probs = log_probs.exp().cpu()
                 argmax = probs.argmax(-1)[:int(log_probs_length)]
                 #result = text_encoder.ctc_decode_enhanced(argmax)
-                result = text_encoder.ctc_beam_search(log_probs.squeeze(), log_probs_length, beam_size=20)
+                result = text_encoder.ctc_beam_search(log_probs.squeeze(), log_probs_length, beam_size=20)[0].text
                 print(result)
                 print("-------------")
-        
+                return result
+
 
         speech_segments = read_and_process_file(cfg["paths"]["boundaries"])
         transcriptions = []
+        print("Transcriptions:")
         for start_time, end_time in speech_segments:
             start = max(int(start_time * REQUIRED_SR), 0)
             end = min(int(end_time * REQUIRED_SR), audio.shape[-1])
             audio_segment = audio[..., start:end]
             transcription = transcribe_audio(audio_segment)
             transcriptions.append(transcription)
-        create_output_file(speech_segments, transcriptions, cfg["paths"]["output"])
+        output_file_path = os.path.join(directory_save_file, "asr_result.txt")
+        create_output_file(speech_segments, transcriptions, output_file_path)
 
 
 if __name__ == "__main__":
