@@ -11,9 +11,10 @@ from pyctcdecode import build_ctcdecoder
 from speechbrain.utils.data_utils import download_file
 
 from .char_text_encoder import CharTextEncoder
+from source.utils.util import ROOT_PATH
 
 
-LM_MODELS_DIRECTORY = Path('lm_models/')
+LM_MODELS_DIRECTORY = ROOT_PATH / 'lm_models/'
 LM_MODELS_DIRECTORY.mkdir(exist_ok=True)
 
 MODEL_URL = 'https://www.openslr.org/resources/11/3-gram.pruned.1e-7.arpa.gz'
@@ -163,6 +164,7 @@ class CTCCharTextEncoder(CharTextEncoder):
         )
 
     def ctc_beam_search_lm(self, log_probs_batch: torch.Tensor, log_probs_lengths: torch.Tensor, beam_size: int, pool: multiprocessing.Pool) -> List[str]:
+    #def ctc_beam_search_lm(self, log_probs_batch: torch.Tensor, log_probs_lengths: torch.Tensor, beam_size: int) -> List[str]:
         """
         Beam search with language model
         It is performed in parallel by batches using pool

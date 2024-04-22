@@ -1,4 +1,5 @@
 import os
+import multiprocessing
 from pathlib import Path
 import sys
 import hydra
@@ -9,6 +10,8 @@ from omegaconf import DictConfig
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent))
 from source.utils.util import prepare_device, CONFIGS_PATH, CHECKPOINTS_DEFAULT_PATH, OUTPUT_DEFAULT_PATH
 from source.text_encoder.ctc_char_text_encoder import CTCCharTextEncoder
+import csv
+
 
 CONFIG_ASR_PATH = CONFIGS_PATH / 'asr'
 CONFIG_ASR_NAME = "main"
@@ -17,6 +20,7 @@ ASR_OUTPUT_PATH = OUTPUT_DEFAULT_PATH / 'asr'
 REQUIRED_SR = 16000
 
 
+# get boundaries
 def read_and_process_file(file_path):
     speech_segments = []
     with open(file_path, 'r') as file:
@@ -29,10 +33,17 @@ def read_and_process_file(file_path):
     return speech_segments
 
 
+# write output file
 def create_output_file(speech_segments, transcriptions, output_file_path):
-    with open(output_file_path, 'w') as file:
-        for segment, transcription in zip(speech_segments, transcriptions):
-            file.write(f"{segment[0]} {segment[1]} {transcription}\n")
+    data = [{'id' : i, 'start': speech_segment[0], 'end': speech_segment[1], 'transcription': transcription}
+        for i, speech_segment, transcription in zip(range(len(speech_segments)), speech_segments, transcriptions)]
+
+    with open(output_file_path, 'w', newline='', encoding='utf-8') as csvfile:
+        fieldnames = ['id', 'start', 'end', 'transcription']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames, delimiter=';')
+
+        writer.writeheader()
+        writer.writerows(data)
 
 
 @hydra.main(config_path=str(CONFIG_ASR_PATH), config_name="inference")
@@ -42,6 +53,7 @@ def inference_asr(cfg: DictConfig):
 
     device, device_ids = prepare_device(cfg["n_gpu"])
     text_encoder = CTCCharTextEncoder()
+    text_encoder.load_lm()
     cfg["arch"]["n_class"] = len(text_encoder)
 
     model = instantiate(cfg["arch"])
@@ -96,13 +108,15 @@ def inference_asr(cfg: DictConfig):
 
                 log_probs = torch.log_softmax(output["logits"], dim=-1)
                 log_probs_length = model.transform_input_lengths(length)
-                probs = log_probs.exp().cpu()
-                argmax = probs.argmax(-1)[:int(log_probs_length)]
+                #probs = log_probs.exp().cpu()
+                #argmax = probs.argmax(-1)[:int(log_probs_length)]
                 #result = text_encoder.ctc_decode_enhanced(argmax)
-                result = text_encoder.ctc_beam_search(log_probs.squeeze(), log_probs_length, beam_size=20)[0].text
-                print(result)
-                print("-------------")
-                return result
+                #result = text_encoder.ctc_beam_search(log_probs.squeeze(), log_probs_length, beam_size=20)[0].text
+                with multiprocessing.Pool(multiprocessing.cpu_count()) as pool:
+                    result = text_encoder.ctc_beam_search_lm(log_probs, log_probs_length, beam_size=5000, pool=pool)[0]
+                    print(result)
+                    print("-------------")
+                    return result
 
 
         speech_segments = read_and_process_file(cfg["paths"]["boundaries"])
@@ -114,7 +128,7 @@ def inference_asr(cfg: DictConfig):
             audio_segment = audio[..., start:end]
             transcription = transcribe_audio(audio_segment)
             transcriptions.append(transcription)
-        output_file_path = os.path.join(directory_save_file, "asr_result.txt")
+        output_file_path = os.path.join(directory_save_file, "asr_result.csv")
         create_output_file(speech_segments, transcriptions, output_file_path)
 
 
