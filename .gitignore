@@ -111,7 +111,7 @@ wandb/
 *.txt
 *.srt
 *.arpa
-*,csv
+*.csv
 
 # editor, os cache directory
 .vscode/

@@ -1,1 +1,1 @@
-from .inference_asr import *
+from .inference_ds2 import *

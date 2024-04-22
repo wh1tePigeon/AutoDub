@@ -3,6 +3,7 @@ datasets
 editdistance
 fire
 gdown
+googletrans==3.1.0a0
 hydra-core
 IPython
 matplotlib
