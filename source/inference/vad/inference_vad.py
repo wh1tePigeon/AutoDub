@@ -3,6 +3,9 @@ import torch
 from speechbrain.inference.VAD import VAD
 import hydra
 import os
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent))
 from source.utils.process_input_audio import load_n_process_audio
 REQUIRED_SR = 16000
 
@@ -14,6 +17,8 @@ def inference_vad(cfg):
     _, filepath = load_n_process_audio(filepath, directory_save, REQUIRED_SR)
     filename = filepath.split(".")[0].split("/")[-1]
     directory_save_file = os.path.join(directory_save, filename)
+    if not os.path.exists(directory_save_file):
+            os.mkdir(directory_save_file)
 
     # apply vad
     vad = VAD.from_hparams(source="speechbrain/vad-crdnn-libriparty",
@@ -42,7 +47,7 @@ def inference_vad(cfg):
 
 if __name__ == "__main__":
     cfg = {
-        "input_path" : "/home/comp/Рабочий стол/AutoDub/input",
+        "input_path" : "/home/comp/Рабочий стол/AutoDub/input/speech.wav",
         "output_dir" : "/home/comp/Рабочий стол/AutoDub/output/vad",
         "checkpoint dir" : "/home/comp/Рабочий стол/AutoDub/checkpoints/vad",
         "activation_th" : 0.8,

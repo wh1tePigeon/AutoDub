@@ -9,6 +9,7 @@ import torchaudio as ta
 from omegaconf import DictConfig
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent))
 from source.utils.util import prepare_device, CONFIGS_PATH, CHECKPOINTS_DEFAULT_PATH, OUTPUT_DEFAULT_PATH
+from source.utils.process_input_audio import load_n_process_audio
 from source.text_encoder.ctc_char_text_encoder import CTCCharTextEncoder
 import csv
 
@@ -49,7 +50,8 @@ def create_output_file(speech_segments, transcriptions, output_file_path):
 @hydra.main(config_path=str(CONFIG_ASR_PATH), config_name="inference")
 def inference_asr(cfg: DictConfig):
     for p in cfg["paths"]:
-        assert os.path.exists(cfg["paths"][p])
+        if p != "output":
+            assert os.path.exists(cfg["paths"][p])
 
     device, device_ids = prepare_device(cfg["n_gpu"])
     text_encoder = CTCCharTextEncoder()
@@ -69,35 +71,13 @@ def inference_asr(cfg: DictConfig):
     filepath = cfg["paths"]["input"]
     directory_save = cfg["paths"]["output"]
     if os.path.isfile(filepath):
+        audio, filepath = load_n_process_audio(filepath, directory_save, sr=16000)
+
         filename = filepath.split(".")[0].split("/")[-1]
         directory_save_file = os.path.join(directory_save, filename)
 
         if not os.path.exists(directory_save_file):
             os.mkdir(directory_save_file)
-        audio, fs = ta.load(filepath)
-
-        changed = False
-
-        # resample input
-        if fs != REQUIRED_SR:
-            print("Wrong samplerate! Resample to 16 kHz")
-            audio = ta.functional.resample(
-                audio,
-                fs,
-                REQUIRED_SR
-            )
-            changed = True
-
-        # make audio single channel
-            if audio.shape[0] > 1:
-                audio = torch.mean(audio, dim=0, keepdim=True)
-                changed = True
-
-        # save resampled audio
-        if changed:
-            filepath = os.path.join(directory_save_file, (filename + "_changed.wav"))
-            ta.save(filepath, audio, REQUIRED_SR)
-            print("Resampled audio saved in ", filepath)
 
         def transcribe_audio(audio_segment: torch.Tensor):
             with torch.inference_mode():
@@ -133,8 +113,10 @@ def inference_asr(cfg: DictConfig):
             audio_segment = audio[..., start:end]
             transcription = transcribe_audio(audio_segment)
             transcriptions.append(transcription)
-        output_file_path = os.path.join(directory_save_file, "asr_result.csv")
+        output_file_path = os.path.join(directory_save_file, (filename + "_asr.csv"))
         create_output_file(speech_segments, transcriptions, output_file_path)
+
+    return output_file_path
 
 
 if __name__ == "__main__":
