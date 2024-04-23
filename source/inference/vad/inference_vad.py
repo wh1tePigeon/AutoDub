@@ -3,67 +3,47 @@ import torch
 from speechbrain.inference.VAD import VAD
 import hydra
 import os
-
+from source.utils.process_input_audio import load_n_process_audio
+REQUIRED_SR = 16000
 
 #@hydra.main(config_path=str(CONFIG_VAD_PATH), config_name="main")
 def inference_vad(cfg):
-    path_to_input_dir = cfg["input dir"]
-    path_to_output_dir = cfg["output dir"]
+    filepath = cfg["input_path"]
+    directory_save = cfg["output_dir"]
 
-    # process all files in input directory
-    for filename in os.listdir(path_to_input_dir):
-        filepath = os.path.join(path_to_input_dir, filename)
-        if os.path.isfile(filepath):
-            directory_save_file = str(os.path.join(path_to_output_dir, filename))[:-4]
+    _, filepath = load_n_process_audio(filepath, directory_save, REQUIRED_SR)
+    filename = filepath.split(".")[0].split("/")[-1]
+    directory_save_file = os.path.join(directory_save, filename)
 
-            if not os.path.exists(directory_save_file):
-                os.mkdir(directory_save_file)
+    # apply vad
+    vad = VAD.from_hparams(source="speechbrain/vad-crdnn-libriparty",
+                            savedir=cfg["checkpoint dir"])
 
-            audio, fs = ta.load(filepath)
-            changed = False
+    boundaries = vad.get_speech_segments(audio_file=filepath, apply_energy_VAD=False)
+    #                                     apply_energy_VAD=True,
+    #                                     activation_th=cfg["activation_th"],
+    #                                     deactivation_th=cfg["deactivation_th"],
+    #                                     close_th=cfg["close_th"],
+    #                                     len_th=cfg["len_th"])
 
-            # resample to 16khz
-            if fs != 16000:
-                transofrm = ta.transforms.Resample(fs, 16000)
-                audio = transofrm(audio)
-                changed = True
-            
-            # make audio single channel
-            if audio.shape[0] > 1:
-                audio = torch.mean(audio, dim=0, keepdim=True)
-                changed = True
+    # somehow this works better ¯\_(ツ)_/¯
+    boundaries = vad.energy_VAD(filepath, boundaries,
+                                activation_th=cfg["activation_th"],
+                                deactivation_th=cfg["deactivation_th"])
+    boundaries = vad.merge_close_segments(boundaries, close_th=cfg["close_th"])
+    boundaries = vad.remove_short_segments(boundaries, len_th=cfg["len_th"])
 
-            # save intermediate result
-            if changed:
-                filepath = os.path.join(directory_save_file, "changed.wav")
-                ta.save(filepath, audio, 16000)
+    path_to_log_file = os.path.join(directory_save_file, (filename + "_boundaries.txt"))
+    vad.save_boundaries(boundaries, audio_file=filepath, save_path=path_to_log_file)
 
-            # apply vad
-            vad = VAD.from_hparams(source="speechbrain/vad-crdnn-libriparty",
-                                   savedir=cfg["checkpoint dir"])
+    result = [filepath, path_to_log_file]
 
-            boundaries = vad.get_speech_segments(audio_file=filepath, apply_energy_VAD=False)
-            #                                     apply_energy_VAD=True,
-            #                                     activation_th=cfg["activation_th"],
-            #                                     deactivation_th=cfg["deactivation_th"],
-            #                                     close_th=cfg["close_th"],
-            #                                     len_th=cfg["len_th"])
-
-            # somehow this works better ¯\_(ツ)_/¯
-            boundaries = vad.energy_VAD(filepath, boundaries,
-                                        activation_th=cfg["activation_th"],
-                                        deactivation_th=cfg["deactivation_th"])
-            boundaries = vad.merge_close_segments(boundaries, close_th=cfg["close_th"])
-            boundaries = vad.remove_short_segments(boundaries, len_th=cfg["len_th"])
-
-            path_to_log_file = os.path.join(directory_save_file, "vad_result.txt")
-            vad.save_boundaries(boundaries, audio_file=filepath, save_path=path_to_log_file)
-
+    return result
 
 if __name__ == "__main__":
     cfg = {
-        "input dir" : "/home/comp/Рабочий стол/AutoDub/input",
-        "output dir" : "/home/comp/Рабочий стол/AutoDub/output/vad",
+        "input_path" : "/home/comp/Рабочий стол/AutoDub/input",
+        "output_dir" : "/home/comp/Рабочий стол/AutoDub/output/vad",
         "checkpoint dir" : "/home/comp/Рабочий стол/AutoDub/checkpoints/vad",
         "activation_th" : 0.8,
         "deactivation_th" : 0.0,

@@ -76,7 +76,7 @@ def inference_asr(cfg: DictConfig):
             os.mkdir(directory_save_file)
         audio, fs = ta.load(filepath)
 
-        resampled = False
+        changed = False
 
         # resample input
         if fs != REQUIRED_SR:
@@ -86,11 +86,16 @@ def inference_asr(cfg: DictConfig):
                 fs,
                 REQUIRED_SR
             )
-            resampled = True
+            changed = True
+
+        # make audio single channel
+            if audio.shape[0] > 1:
+                audio = torch.mean(audio, dim=0, keepdim=True)
+                changed = True
 
         # save resampled audio
-        if resampled:
-            filepath = os.path.join(directory_save_file, (filename + "-resampled.wav"))
+        if changed:
+            filepath = os.path.join(directory_save_file, (filename + "_changed.wav"))
             ta.save(filepath, audio, REQUIRED_SR)
             print("Resampled audio saved in ", filepath)
 
