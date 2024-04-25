@@ -14,11 +14,11 @@ from source.text_encoder.ctc_char_text_encoder import CTCCharTextEncoder
 import csv
 
 
-CONFIG_ASR_PATH = CONFIGS_PATH / 'asr'
-CONFIG_ASR_NAME = "main"
-ASR_CHECKPOINT_PATH = CHECKPOINTS_DEFAULT_PATH / 'asr' / 'main.pth'
-ASR_OUTPUT_PATH = OUTPUT_DEFAULT_PATH / 'asr'
-REQUIRED_SR = 16000
+#CONFIG_ASR_PATH = CONFIGS_PATH / 'asr'
+#CONFIG_ASR_NAME = "main"
+#ASR_CHECKPOINT_PATH = CHECKPOINTS_DEFAULT_PATH / 'asr' / 'main.pth'
+#ASR_OUTPUT_PATH = OUTPUT_DEFAULT_PATH / 'asr'
+#REQUIRED_SR = 16000
 
 
 # get boundaries
@@ -47,12 +47,8 @@ def create_output_file(speech_segments, transcriptions, output_file_path):
         writer.writerows(data)
 
 
-@hydra.main(config_path=str(CONFIG_ASR_PATH), config_name="inference")
-def inference_asr(cfg: DictConfig):
-    for p in cfg["paths"]:
-        if p != "output":
-            assert os.path.exists(cfg["paths"][p])
-
+#@hydra.main(config_path=str(CONFIG_ASR_PATH), config_name="inference")
+def inference_asr(cfg):
     device, device_ids = prepare_device(cfg["n_gpu"])
     text_encoder = CTCCharTextEncoder()
     text_encoder.load_lm()
@@ -63,18 +59,20 @@ def inference_asr(cfg: DictConfig):
     if len(device_ids) > 1:
         model = torch.nn.DataParallel(model, device_ids=device_ids)
 
-    checkpoint = torch.load(cfg["paths"]["checkpoint"], map_location=device)
+    checkpoint = torch.load(cfg["checkpoint_path"], map_location=device)
     state_dict = checkpoint
     model.load_state_dict(state_dict)
     model.eval()
 
-    filepath = cfg["paths"]["input"]
-    directory_save = cfg["paths"]["output"]
+    filepath = cfg["filepath"]
+    output_dir = cfg["output_dir"]
+    sr = cfg["sr"]
+
     if os.path.isfile(filepath):
-        audio, filepath = load_n_process_audio(filepath, directory_save, sr=16000)
+        audio, filepath = load_n_process_audio(filepath, output_dir, sr)
 
         filename = filepath.split(".")[0].split("/")[-1]
-        directory_save_file = os.path.join(directory_save, filename)
+        directory_save_file = os.path.join(output_dir, filename)
 
         if not os.path.exists(directory_save_file):
             os.mkdir(directory_save_file)
@@ -104,12 +102,12 @@ def inference_asr(cfg: DictConfig):
                     return result
 
 
-        speech_segments = read_and_process_file(cfg["paths"]["boundaries"])
+        speech_segments = read_and_process_file(cfg["boundaries"])
         transcriptions = []
         print("Transcriptions:")
         for start_time, end_time in speech_segments:
-            start = max(int(start_time * REQUIRED_SR), 0)
-            end = min(int(end_time * REQUIRED_SR), audio.shape[-1])
+            start = max(int(start_time * sr), 0)
+            end = min(int(end_time * sr), audio.shape[-1])
             audio_segment = audio[..., start:end]
             transcription = transcribe_audio(audio_segment)
             transcriptions.append(transcription)

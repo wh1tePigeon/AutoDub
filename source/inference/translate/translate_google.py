@@ -9,8 +9,8 @@ def translate(line: str):
     return translated_line
 
 
-def process_file(cfg: DictConfig):
-    filepath = cfg["input_path"]
+def translate_file_google(cfg):
+    filepath = cfg["filepath"]
     directory_save = cfg["output_dir"]
 
     assert os.path.exists(filepath)
@@ -35,4 +35,4 @@ if __name__ == "__main__":
         "input_path" : "/home/comp/Рабочий стол/AutoDub/output/asr/speech_resampled_mono/speech_resampled_mono_asr.csv",
         "output_dir" : "/home/comp/Рабочий стол/AutoDub/output/translated/"
     }
-    process_file(cfg)
+    translate_file_google(cfg)

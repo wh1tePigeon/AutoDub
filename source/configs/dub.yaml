@@ -1,0 +1,32 @@
+bsrnn:
+  n_gpu: 1
+  arch: ${source.configs.bsrnn.arch.model_conf}
+  sr: 44100
+  filepath:
+  output_dir: "/home/comp/Рабочий стол/AutoDub/output/bsrnn"
+  checkpoint_path: "/home/comp/Рабочий стол/AutoDub/checkpoints/bsrnn/main.pth"
+
+vad:
+  sr: 16000
+  filepath:
+  output_dir: "/home/comp/Рабочий стол/AutoDub/output/vad"
+  checkpoint_path: "/home/comp/Рабочий стол/AutoDub/checkpoints/vad"
+  activation_th: 0.8
+  deactivation_th: 0.0
+  close_th: 0.250
+  len_th: 0.250
+
+asr:
+  n_gpu: 1
+  arch: ${asr.arch.model_conf}
+  sr: 16000
+  filepath:
+  boundaries:
+  output_dir: "/home/comp/Рабочий стол/AutoDub/output/vad"
+  checkpoint_path: "/home/comp/Рабочий стол/AutoDub/checkpoints/asr/main.pth"
+  
+tr:
+  filepath:
+  output_dir : "/home/comp/Рабочий стол/AutoDub/output/translated/"
+
+name: dub

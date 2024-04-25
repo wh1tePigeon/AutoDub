@@ -7,14 +7,14 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent))
 from source.utils.process_input_audio import load_n_process_audio
-REQUIRED_SR = 16000
 
 #@hydra.main(config_path=str(CONFIG_VAD_PATH), config_name="main")
 def inference_vad(cfg):
     filepath = cfg["input_path"]
     directory_save = cfg["output_dir"]
+    sr = cfg["sr"]
 
-    _, filepath = load_n_process_audio(filepath, directory_save, REQUIRED_SR)
+    _, filepath = load_n_process_audio(filepath, directory_save, sr)
     filename = filepath.split(".")[0].split("/")[-1]
     directory_save_file = os.path.join(directory_save, filename)
     if not os.path.exists(directory_save_file):
