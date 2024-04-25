@@ -13,7 +13,7 @@ def load_n_process_audio(input_path, output_dir, sr) -> Tuple[torch.Tensor, str]
 
     # resample
     if fs != sr:
-        print("Wrong samplerate! Resampling")
+        print("Resampling")
         audio = ta.functional.resample(
         audio,
         fs,

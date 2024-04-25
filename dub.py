@@ -32,7 +32,7 @@ def dub(cfg):
     cfg["asr"]["boundaries"] = vad_boundaries_path
     transcribed_path = inference_asr(cfg["asr"])
 
-    print("Translating:")
+    print("Translating")
     cfg["tr"]["filepath"] = transcribed_path
     translated_path = translate_file_google(cfg["tr"])
 
