@@ -1,14 +1,12 @@
-import os
-from typing import List, NamedTuple, Tuple, Dict
-from collections import defaultdict
-from pathlib import Path
-
-import torch
-import shutil
 import gzip
 import multiprocessing
+import os
+import shutil
+import torch
+from collections import defaultdict
 from pyctcdecode import build_ctcdecoder
 from speechbrain.utils.data_utils import download_file
+from typing import Dict, List, NamedTuple, Tuple
 
 from .char_text_encoder import CharTextEncoder
 from source.utils.util import ROOT_PATH

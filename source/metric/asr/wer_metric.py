@@ -1,6 +1,5 @@
 from typing import List
 
-import torch
 from torch import Tensor
 
 from source.base.base_metric import BaseMetric

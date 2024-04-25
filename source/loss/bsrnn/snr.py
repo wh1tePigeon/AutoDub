@@ -1,6 +1,5 @@
 import torch
 from torch.nn.modules.loss import _Loss
-from torch.nn import functional as F
 
 class SignalNoisePNormRatio(_Loss):
     def __init__(

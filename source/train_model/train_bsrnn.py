@@ -3,11 +3,11 @@ import sys
 import hydra
 import numpy as np
 import torch
-from hydra.utils import instantiate
-from omegaconf import DictConfig
 
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+from hydra.utils import instantiate
+from omegaconf import DictConfig
 from source.trainer.trainer_bsrnn import Trainer
 from source.utils.util import get_logger, prepare_device, CONFIGS_PATH
 from source.utils.object_loading import get_dataloaders

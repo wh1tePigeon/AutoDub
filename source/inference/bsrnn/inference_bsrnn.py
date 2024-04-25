@@ -1,30 +1,19 @@
 import os
-from pathlib import Path
 import sys
-import hydra
-from hydra.utils import instantiate
 import torch
 import torchaudio as ta
+from hydra.utils import instantiate
+from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent))
-from source.utils.util import prepare_device, CONFIGS_PATH, CHECKPOINTS_DEFAULT_PATH, OUTPUT_DEFAULT_PATH
+from source.utils.util import prepare_device
 from source.utils.process_input_audio import load_n_process_audio
 from source.utils.fader import OverlapAddFader
 from omegaconf import OmegaConf
 
-#CONFIG_BSRNN_PATH = CONFIGS_PATH / 'bsrnn'
-#BSRNN_CHECKPOINT_PATH = CHECKPOINTS_DEFAULT_PATH / 'bsrnn' / 'main.pth'
-#BSRNN_OUTPUT_PATH = OUTPUT_DEFAULT_PATH / 'bsrnn'
-#INPUT_PATH = "/home/comp/Рабочий стол/AutoDub/input/1.wav"
-#REQUIRED_SR = 44100
-
-
-#@hydra.main(config_path=str(CONFIG_BSRNN_PATH), config_name="main")
 def inference_bsrnn(cfg):
     device, device_ids = prepare_device(cfg["n_gpu"])
     arch = OmegaConf.load(cfg["model"])
-    #arch = OmegaConf.resolve(arch)
     model = instantiate(arch)
-    #model = instantiate(cfg["model"])
     model = model.to(device)
     if len(device_ids) > 1:
         model = torch.nn.DataParallel(model, device_ids=device_ids)
@@ -33,7 +22,6 @@ def inference_bsrnn(cfg):
     state_dict = checkpoint["state_dict"]
     model.load_state_dict(state_dict)
     model.eval()
-
 
     filepath = cfg["filepath"]
     output_dir = cfg["output_dir"]
@@ -72,8 +60,6 @@ def inference_bsrnn(cfg):
             filename = filepath.split(".")[0].split("/")[-1]
 
             directory_save_file = os.path.join(output_dir, filename)
-            #if not os.path.exists(directory_save_file):
-            #    os.mkdir(directory_save_file)
             os.makedirs(directory_save_file, exist_ok=True)
             
             speech_save_path = os.path.join(directory_save_file, (filename + "_speech.wav"))

@@ -1,25 +1,16 @@
 import os
-import multiprocessing
-from pathlib import Path
+import csv
 import sys
-import hydra
-from hydra.utils import instantiate
 import torch
 import torchaudio as ta
-from omegaconf import DictConfig
+import multiprocessing
+from hydra.utils import instantiate
+from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent))
-from source.utils.util import prepare_device, CONFIGS_PATH, CHECKPOINTS_DEFAULT_PATH, OUTPUT_DEFAULT_PATH
+from source.utils.util import prepare_device
 from source.utils.process_input_audio import load_n_process_audio
 from source.text_encoder.ctc_char_text_encoder import CTCCharTextEncoder
-import csv
 from omegaconf import OmegaConf
-
-
-#CONFIG_ASR_PATH = CONFIGS_PATH / 'asr'
-#CONFIG_ASR_NAME = "main"
-#ASR_CHECKPOINT_PATH = CHECKPOINTS_DEFAULT_PATH / 'asr' / 'main.pth'
-#ASR_OUTPUT_PATH = OUTPUT_DEFAULT_PATH / 'asr'
-#REQUIRED_SR = 16000
 
 
 # get boundaries
@@ -48,7 +39,6 @@ def create_output_file(speech_segments, transcriptions, output_file_path):
         writer.writerows(data)
 
 
-#@hydra.main(config_path=str(CONFIG_ASR_PATH), config_name="inference")
 def inference_asr(cfg):
     device, device_ids = prepare_device(cfg["n_gpu"])
     text_encoder = CTCCharTextEncoder()
@@ -77,8 +67,6 @@ def inference_asr(cfg):
         filename = filepath.split(".")[0].split("/")[-1]
         directory_save_file = os.path.join(output_dir, filename)
 
-        #if not os.path.exists(directory_save_file):
-        #    os.mkdir(directory_save_file)
         os.makedirs(directory_save_file, exist_ok=True)
 
         def transcribe_audio(audio_segment: torch.Tensor):

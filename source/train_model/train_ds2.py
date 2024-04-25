@@ -8,7 +8,7 @@ from omegaconf import DictConfig
 
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
-from source.trainer.trainer_asr import Trainer
+from source.trainer.trainer_ds2 import Trainer
 from source.utils.util import get_logger, prepare_device, CONFIGS_PATH
 from source.utils.object_loading import get_dataloaders
 
