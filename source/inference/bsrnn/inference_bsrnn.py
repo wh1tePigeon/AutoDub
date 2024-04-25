@@ -8,11 +8,12 @@ import torchaudio as ta
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent))
 from source.utils.util import prepare_device, CONFIGS_PATH, CHECKPOINTS_DEFAULT_PATH, OUTPUT_DEFAULT_PATH
 from source.utils.process_input_audio import load_n_process_audio
+from source.utils.fader import OverlapAddFader
 
 CONFIG_BSRNN_PATH = CONFIGS_PATH / 'bsrnn'
 BSRNN_CHECKPOINT_PATH = CHECKPOINTS_DEFAULT_PATH / 'bsrnn' / 'main.pth'
 BSRNN_OUTPUT_PATH = OUTPUT_DEFAULT_PATH / 'bsrnn'
-INPUT_PATH = "/home/comp/Рабочий стол/AutoDub/input"
+INPUT_PATH = "/home/comp/Рабочий стол/AutoDub/input/1.wav"
 REQUIRED_SR = 44100
 
 
@@ -35,31 +36,48 @@ def inference_bsrnn(cfg):
 
     if os.path.isfile(filepath):
         audio, filepath = load_n_process_audio(filepath, directory_save, REQUIRED_SR)
-
-        track_name = os.path.basename(filepath).split(".")[0]
-        track = [track_name]
-        
+        audio = audio.reshape(1, 1, -1)
+  
         # move audio to gpu
         audio = audio.to(device)
 
         with torch.inference_mode():
-            # create batch
-            batch = {
-                    "audio": {
-                            "mixture": audio,
-                    },
-                    "track": track,
-            }
-
-            # process batch
-            output = model(batch)
-            if type(output) is dict:
-                batch.update(output)
+            def forward(audio):
+                _, output = model({"audio": {"mixture": audio},})
+                return output["audio"]
+            
+            if audio.shape[-1] / REQUIRED_SR > 10:
+                fader = OverlapAddFader(window_type="hann",
+                                        chunk_size_second=6.0,
+                                        hop_size_second=0.5,
+                                        fs=44100,
+                                        batch_size=6)
+                
+                output = fader(audio,
+                                lambda a: forward(a))
+                
             else:
-                raise Exception("change type of model")
-            print(output)
-            # i run out of memory((
+                output = forward(audio)
+            
+            speech = output["audio"]["speech"]
+            speech = speech.reshape(1, -1)
+            audio = audio.reshape(1, -1)
+            background = audio - speech
 
+            filename = filepath.split(".")[0].split("/")[-1]
+
+            directory_save_file = os.path.join(directory_save, filename)
+            if not os.path.exists(directory_save_file):
+                os.mkdir(directory_save_file)
+            
+            speech_save_path = os.path.join(directory_save_file, (filename + "_speech.wav"))
+            background_save_path = os.path.join(directory_save_file, (filename + "_background.wav"))
+
+            speech = speech.to("cpu")
+            background = background.to("cpu")
+
+            ta.save(speech_save_path, speech, sample_rate=REQUIRED_SR)
+            ta.save(background_save_path, background, sample_rate=REQUIRED_SR)
 
 
 if __name__ == "__main__":
