@@ -17,8 +17,9 @@ def inference_vad(cfg):
     _, filepath = load_n_process_audio(filepath, directory_save, sr)
     filename = filepath.split(".")[0].split("/")[-1]
     directory_save_file = os.path.join(directory_save, filename)
-    if not os.path.exists(directory_save_file):
-            os.mkdir(directory_save_file)
+    #if not os.path.exists(directory_save_file):
+    #       os.mkdir(directory_save_file)
+    os.makedirs(directory_save_file, exist_ok=True)
 
     # apply vad
     vad = VAD.from_hparams(source="speechbrain/vad-crdnn-libriparty",

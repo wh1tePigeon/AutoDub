@@ -18,9 +18,11 @@ def translate_file_google(cfg):
     filename = filepath.split(".")[0].split("/")[-1]
     
     directory_save_file = os.path.join(directory_save, filename)
-    if not os.path.exists(directory_save_file):
-            os.mkdir(directory_save_file)
+    #if not os.path.exists(directory_save_file):
+    #        os.mkdir(directory_save_file)
 
+    os.makedirs(directory_save_file, exist_ok=True)
+    
     output = os.path.join(directory_save_file, (filename + "_g_tr.csv"))
 
     translator = Translator()

@@ -72,8 +72,9 @@ def inference_bsrnn(cfg):
             filename = filepath.split(".")[0].split("/")[-1]
 
             directory_save_file = os.path.join(output_dir, filename)
-            if not os.path.exists(directory_save_file):
-                os.mkdir(directory_save_file)
+            #if not os.path.exists(directory_save_file):
+            #    os.mkdir(directory_save_file)
+            os.makedirs(directory_save_file, exist_ok=True)
             
             speech_save_path = os.path.join(directory_save_file, (filename + "_speech.wav"))
             background_save_path = os.path.join(directory_save_file, (filename + "_background.wav"))

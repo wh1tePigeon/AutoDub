@@ -77,8 +77,9 @@ def inference_asr(cfg):
         filename = filepath.split(".")[0].split("/")[-1]
         directory_save_file = os.path.join(output_dir, filename)
 
-        if not os.path.exists(directory_save_file):
-            os.mkdir(directory_save_file)
+        #if not os.path.exists(directory_save_file):
+        #    os.mkdir(directory_save_file)
+        os.makedirs(directory_save_file, exist_ok=True)
 
         def transcribe_audio(audio_segment: torch.Tensor):
             with torch.inference_mode():

@@ -10,7 +10,6 @@ bsrnn:
   hop_size_second: 0.5
   batch_size: 6
 
-
 vad:
   sr: 16000
   filepath:
