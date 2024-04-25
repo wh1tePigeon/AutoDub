@@ -9,6 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent))
 from source.utils.util import prepare_device, CONFIGS_PATH, CHECKPOINTS_DEFAULT_PATH, OUTPUT_DEFAULT_PATH
 from source.utils.process_input_audio import load_n_process_audio
 from source.utils.fader import OverlapAddFader
+from omegaconf import OmegaConf
 
 #CONFIG_BSRNN_PATH = CONFIGS_PATH / 'bsrnn'
 #BSRNN_CHECKPOINT_PATH = CHECKPOINTS_DEFAULT_PATH / 'bsrnn' / 'main.pth'
@@ -20,7 +21,10 @@ from source.utils.fader import OverlapAddFader
 #@hydra.main(config_path=str(CONFIG_BSRNN_PATH), config_name="main")
 def inference_bsrnn(cfg):
     device, device_ids = prepare_device(cfg["n_gpu"])
-    model = instantiate(cfg["arch"])
+    arch = OmegaConf.load(cfg["model"])
+    #arch = OmegaConf.resolve(arch)
+    model = instantiate(arch)
+    #model = instantiate(cfg["model"])
     model = model.to(device)
     if len(device_ids) > 1:
         model = torch.nn.DataParallel(model, device_ids=device_ids)
@@ -48,11 +52,11 @@ def inference_bsrnn(cfg):
                 return output["audio"]
             
             if audio.shape[-1] / sr > 10:
-                fader = OverlapAddFader(window_type="hann",
-                                        chunk_size_second=6.0,
-                                        hop_size_second=0.5,
-                                        fs=44100,
-                                        batch_size=6)
+                fader = OverlapAddFader(window_type=cfg["window_type"],
+                                        chunk_size_second=cfg["chunk_size_second"],
+                                        hop_size_second=cfg["hop_size_second"],
+                                        fs=sr,
+                                        batch_size=cfg["batch_size"])
                 
                 output = fader(audio,
                                 lambda a: forward(a))

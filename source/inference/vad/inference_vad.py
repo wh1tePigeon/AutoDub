@@ -10,7 +10,7 @@ from source.utils.process_input_audio import load_n_process_audio
 
 #@hydra.main(config_path=str(CONFIG_VAD_PATH), config_name="main")
 def inference_vad(cfg):
-    filepath = cfg["input_path"]
+    filepath = cfg["filepath"]
     directory_save = cfg["output_dir"]
     sr = cfg["sr"]
 
@@ -22,7 +22,7 @@ def inference_vad(cfg):
 
     # apply vad
     vad = VAD.from_hparams(source="speechbrain/vad-crdnn-libriparty",
-                            savedir=cfg["checkpoint dir"])
+                            savedir=cfg["checkpoint_path"])
 
     boundaries = vad.get_speech_segments(audio_file=filepath, apply_energy_VAD=False)
     #                                     apply_energy_VAD=True,
@@ -47,9 +47,9 @@ def inference_vad(cfg):
 
 if __name__ == "__main__":
     cfg = {
-        "input_path" : "/home/comp/Рабочий стол/AutoDub/input/speech.wav",
+        "filepath" : "/home/comp/Рабочий стол/AutoDub/input/speech.wav",
         "output_dir" : "/home/comp/Рабочий стол/AutoDub/output/vad",
-        "checkpoint dir" : "/home/comp/Рабочий стол/AutoDub/checkpoints/vad",
+        "checkpoint_path" : "/home/comp/Рабочий стол/AutoDub/checkpoints/vad",
         "activation_th" : 0.8,
         "deactivation_th" : 0.0,
         "close_th" : 0.250,

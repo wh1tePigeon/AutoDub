@@ -10,9 +10,10 @@ from source.utils.util import prepare_device, CONFIGS_PATH, CHECKPOINTS_DEFAULT_
 from source.utils.process_input_audio import load_n_process_audio
 from source.utils.fader import OverlapAddFader
 from source.inference import inference_bsrnn, inference_vad, inference_asr, translate_file_google
-
+from omegaconf import OmegaConf
 
 FILEPATH = "/home/comp/Рабочий стол/AutoDub/input/1.wav"
+#FILEPATH = "/home/comp/Рабочий стол/AutoDub/output/bsrnn/1_mono/1_mono_speech.wav"
 
 @hydra.main(config_path=str(CONFIGS_PATH), config_name="dub")
 def dub(cfg):
@@ -25,8 +26,10 @@ def dub(cfg):
 
     assert os.path.exists(FILEPATH)
 
-    speech_path, background_path = inference_bsrnn(cfg["bsrnn"])
+    #cfg = OmegaConf.resolve(cfg)
 
+    speech_path, background_path = inference_bsrnn(cfg["bsrnn"])
+    speech_path = FILEPATH
     cfg["vad"]["filepath"] = speech_path
     filepath, vad_boundaries_path = inference_vad(cfg["vad"])
 

@@ -12,6 +12,7 @@ from source.utils.util import prepare_device, CONFIGS_PATH, CHECKPOINTS_DEFAULT_
 from source.utils.process_input_audio import load_n_process_audio
 from source.text_encoder.ctc_char_text_encoder import CTCCharTextEncoder
 import csv
+from omegaconf import OmegaConf
 
 
 #CONFIG_ASR_PATH = CONFIGS_PATH / 'asr'
@@ -52,9 +53,11 @@ def inference_asr(cfg):
     device, device_ids = prepare_device(cfg["n_gpu"])
     text_encoder = CTCCharTextEncoder()
     text_encoder.load_lm()
-    cfg["arch"]["n_class"] = len(text_encoder)
+    arch = OmegaConf.load(cfg["model"])
 
-    model = instantiate(cfg["arch"])
+    arch["n_class"] = len(text_encoder)
+
+    model = instantiate(arch)
     model = model.to(device)
     if len(device_ids) > 1:
         model = torch.nn.DataParallel(model, device_ids=device_ids)
