@@ -32,3 +32,8 @@ asr:
 tr:
   filepath:
   output_dir : "/home/comp/Рабочий стол/AutoDub/output/translated/"
+
+cut:
+  audio_path:
+  output_dir: "/home/comp/Рабочий стол/AutoDub/output/cutted/"
+  csv_path:

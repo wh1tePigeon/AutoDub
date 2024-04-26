@@ -39,7 +39,7 @@ def inference_bsrnn(cfg):
                 _, output = model({"audio": {"mixture": audio},})
                 return output["audio"]
             
-            if audio.shape[-1] / sr > 10:
+            if audio.shape[-1] / sr > 12:
                 fader = OverlapAddFader(window_type=cfg["window_type"],
                                         chunk_size_second=cfg["chunk_size_second"],
                                         hop_size_second=cfg["hop_size_second"],
