@@ -1,5 +1,6 @@
 import torch
 import torchaudio as ta
+import torch.nn.functional as F
 import os
 from typing import Tuple
 import pandas as pd
@@ -143,9 +144,6 @@ def concat_segments(speech_path, background_path, csv_filepath, filename,
 
     df = pd.read_csv(csv_filepath, delimiter=';', encoding='utf-8')
 
-    speech = speech.squeeze()
-    background = background.squeeze()
-
     for _, row in df.iterrows():
         start = row["start"]
         end = row["end"]
@@ -156,14 +154,21 @@ def concat_segments(speech_path, background_path, csv_filepath, filename,
 
         start = max(int(start * sr_segment), 0)
         end = min(int(end * sr_segment), speech.shape[-1])
-
         assert (end > start)
 
-        segment = segment.squeeze()
-        speech[start:end] = segment
+        target_len = end - start
+        segment_len = segment.shape[-1]
+
+        #len fuckups due to conversion from sec to samples on the previous steps
+        if target_len <= segment_len:
+            segment = segment[:, :target_len]
+        else:
+            padding_size = target_len - segment_len
+            segment = F.pad(segment, pad=(0, padding_size), mode='constant', value=0)
+
+        speech[:, start:end] = segment
 
     final_audio = background + speech
-    final_audio.reshape(1, -1)
     directory_save_file = os.path.join(output_dir, filename)
     os.makedirs(directory_save_file, exist_ok=True)
 
