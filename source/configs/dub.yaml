@@ -40,9 +40,9 @@ tr:
   output_dir : "/home/comp/Рабочий стол/AutoDub/output/translated/"
 
 cut:
-  filepath: "/home/comp/Рабочий стол/AutoDub/output/vad/test_audio_mono_speech_resampled/test_audio_mono_speech_resampled.wav" #
+  filepath:
   output_dir: "/home/comp/Рабочий стол/AutoDub/output/cutted/"
-  csv_filepath: '/home/comp/Рабочий стол/AutoDub/output/translated/test_audio_mono_speech_resampled_asr/test_audio_mono_speech_resampled_asr_g_tr.csv' #
+  csv_filepath:
 
 tts:
   csv_filepath: 
