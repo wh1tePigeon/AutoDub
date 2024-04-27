@@ -60,7 +60,6 @@ def lazy_tts(csv_filepath, output_dir, filename, target_sr, checkpoint_path):
         save_file_path = os.path.join(directory_save_file_segments, segment_filename)
         df.at[i, "tts_path"] = save_file_path
 
-        #audio = audio.reshape(1, -1)
         ta.save(save_file_path, audio, sample_rate=target_sr)
 
     new_csv_path = os.path.join(directory_save_file, (csv_filename + "_tts.csv"))
