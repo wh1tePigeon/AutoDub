@@ -17,11 +17,7 @@ def load_n_process_audio(input_path, output_dir, sr) -> Tuple[torch.Tensor, str]
     # resample
     if fs != sr:
         print("Resampling")
-        audio = ta.functional.resample(
-        audio,
-        fs,
-        sr
-    )
+        audio = ta.functional.resample(audio, fs, sr)
         filename += "_resampled"
         changed = True
     

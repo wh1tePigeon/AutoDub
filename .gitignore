@@ -113,6 +113,8 @@ wandb/
 *.arpa
 *.csv
 *.mp4
+*.json
+*.md5
 
 # editor, os cache directory
 .vscode/

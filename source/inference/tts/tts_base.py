@@ -1,12 +1,13 @@
 import os
 import torch
 import torchaudio as ta
+import torch.nn.functional as F
 import pandas as pd
 from TTS.tts.configs.xtts_config import XttsConfig
 from TTS.tts.models.xtts import Xtts
 
 
-def lazy_tts(csv_filepath, output_dir, filename, checkpoint_path):
+def lazy_tts(csv_filepath, output_dir, filename, target_sr, checkpoint_path):
     assert os.path.exists(csv_filepath)
 
     config = XttsConfig()
@@ -43,13 +44,25 @@ def lazy_tts(csv_filepath, output_dir, filename, checkpoint_path):
         sr = 24000
         audio = torch.tensor(out["wav"]).unsqueeze(0)
 
+        if target_sr != sr:
+            audio = ta.functional.resample(audio, sr, target_sr )
+        
+        #len = audio.shape[1] / target_sr
+        #target_len = row["end"] - row["start"]
+
+        #if len != target_len:
+        #    target_shape = int(target_len * target_sr)
+        #    audio = audio.reshape(1, 1, -1)
+        #    audio = F.interpolate(audio, size=target_shape, mode='linear', align_corners=False)
+
         segment_filename = refer_wav_path.split(".")[0].split("/")[-1]
         segment_filename = segment_filename + "_tts.wav"
 
         save_file_path = os.path.join(directory_save_file_segments, segment_filename)
         df.at[i, "tts_path"] = save_file_path
 
-        ta.save(save_file_path, audio, sample_rate=sr)
+        #audio = audio.reshape(1, -1)
+        ta.save(save_file_path, audio, sample_rate=target_sr)
 
     new_csv_path = os.path.join(directory_save_file, (csv_filename + "_tts.csv"))
     df.to_csv(new_csv_path, sep=';', index=False, encoding='utf-8')
@@ -62,4 +75,4 @@ if __name__ == "__main__":
     output_dir = "/home/comp/Рабочий стол/AutoDub/output/tts/lazy"
     filename = "1_mono_speech_resampled"
     checkpoint_path = "/home/comp/Рабочий стол/AutoDub/checkpoints/tts/lazy"
-    lazy_tts(csv_filepath, output_dir, filename, checkpoint_path)
+    lazy_tts(csv_filepath, output_dir, filename, 44100, checkpoint_path)
