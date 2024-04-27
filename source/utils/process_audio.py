@@ -3,7 +3,7 @@ import torchaudio as ta
 import os
 from typing import Tuple
 import pandas as pd
-from moviepy.editor import VideoFileClip
+from moviepy.editor import VideoFileClip, AudioFileClip
 from pydub import AudioSegment
 
 
@@ -123,14 +123,77 @@ def align_audio_length(csv_filepath, output_dir, filename):
         audio.export(save_segment_path, format="wav")
         df.at[i, "aligned_tts"] = save_segment_path
 
-    new_csv_path = os.path.join(directory_save_file, (csv_filename + "_wpaths.csv"))
+    new_csv_path = os.path.join(directory_save_file, (csv_filename + "_aligned.csv"))
     df.to_csv(new_csv_path, sep=';', index=False, encoding='utf-8')
     return new_csv_path
 
 
-if __name__ == "__main__":
-    csv_filepath = "/home/comp/Рабочий стол/AutoDub/output/tts/lazy/1_mono_speech_resampled/1_mono_speech_resampled_asr_g_tr_wpaths_tts.csv"
-    output_dir = "/home/comp/Рабочий стол/AutoDub/output/aligned_audio"
-    filename = "1_mono_speech_resampled"
+def concat_segments(speech_path, background_path, csv_filepath, filename,
+                    output_dir, join_video=False, video_path=""):
+    assert os.path.exists(speech_path)
+    assert os.path.exists(background_path)
+    assert os.path.exists(csv_filepath)
+    if join_video:
+        assert os.path.exists(video_path)
 
-    align_audio_length(csv_filepath, output_dir, filename)
+    speech, sr_speech = ta.load(speech_path)
+    background, sr_background = ta.load(background_path)
+
+    assert (sr_speech == sr_background)
+
+    df = pd.read_csv(csv_filepath, delimiter=';', encoding='utf-8')
+
+    speech = speech.squeeze()
+    background = background.squeeze()
+
+    for _, row in df.iterrows():
+        start = row["start"]
+        end = row["end"]
+        segment_path = row["aligned_tts"]
+
+        segment, sr_segment = ta.load(segment_path)
+        assert (sr_speech == sr_segment)
+
+        start = max(int(start * sr_segment), 0)
+        end = min(int(end * sr_segment), speech.shape[-1])
+
+        assert (end > start)
+
+        segment = segment.squeeze()
+        speech[start:end] = segment
+
+    final_audio = background + speech
+    final_audio.reshape(1, -1)
+    directory_save_file = os.path.join(output_dir, filename)
+    os.makedirs(directory_save_file, exist_ok=True)
+
+    final_audio_name = filename + "_final_audio.wav"
+    final_audio_save_path = os.path.join(directory_save_file, final_audio_name)
+    ta.save(final_audio_save_path, final_audio, sample_rate=sr_speech)
+
+    final_video_save_path = ""
+    if join_video:
+        video_ext = video_path.split(".")[-1]
+        final_video_name = filename + "_final_video." + video_ext
+        final_video_save_path = os.path.join(directory_save_file, final_video_name)
+
+        video = VideoFileClip(video_path)
+        audio = AudioFileClip(final_audio_save_path)
+
+        video = video.set_audio(audio)
+        video.write_videofile(final_video_save_path)
+
+    return [final_audio_save_path, final_video_save_path]
+
+
+if __name__ == "__main__":
+    speech_path = "/home/comp/Рабочий стол/AutoDub/output/bsrnn/1_mono/1_mono_speech.wav"
+    background_path = "/home/comp/Рабочий стол/AutoDub/output/bsrnn/1_mono/1_mono_background.wav"
+    csv_filepath = "/home/comp/Рабочий стол/AutoDub/output/aligned_audio/1_mono_speech_resampled/1_mono_speech_resampled_asr_g_tr_wpaths_tts_wpaths.csv"
+    filename = "1_mono_speech_resampled"
+    output_dir = "/home/comp/Рабочий стол/AutoDub/output/final"
+    join_video = False
+    video_path = ""
+
+    concat_segments(speech_path, background_path, csv_filepath, filename,
+                    output_dir, join_video=False, video_path="")
