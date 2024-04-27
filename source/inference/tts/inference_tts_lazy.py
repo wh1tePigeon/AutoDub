@@ -1,7 +1,6 @@
 import os
 import torch
 import torchaudio as ta
-import torch.nn.functional as F
 import pandas as pd
 from TTS.tts.configs.xtts_config import XttsConfig
 from TTS.tts.models.xtts import Xtts
