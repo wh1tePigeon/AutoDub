@@ -8,7 +8,7 @@ from hydra.utils import instantiate
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent))
 from source.utils.util import prepare_device
-from source.utils.process_input_audio import load_n_process_audio
+from source.utils.process_audio import load_n_process_audio
 from source.text_encoder.ctc_char_text_encoder import CTCCharTextEncoder
 from omegaconf import OmegaConf
 

@@ -5,7 +5,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent))
 from source.utils.util import CONFIGS_PATH
 from source.inference import inference_bsrnn, inference_vad, inference_asr, translate_file_google
-from source.utils.process_input_audio import cut_n_save
+from source.utils.process_audio import cut_n_save
 
 FILEPATH = "/home/comp/Рабочий стол/AutoDub/input/1.wav"
 

@@ -3,7 +3,7 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent))
 from speechbrain.inference.VAD import VAD
-from source.utils.process_input_audio import load_n_process_audio
+from source.utils.process_audio import load_n_process_audio
 
 #@hydra.main(config_path=str(CONFIG_VAD_PATH), config_name="main")
 def inference_vad(cfg):
