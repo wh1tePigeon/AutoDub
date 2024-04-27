@@ -3,6 +3,8 @@ import torchaudio as ta
 import os
 from typing import Tuple
 import pandas as pd
+from moviepy.editor import VideoFileClip
+
 
 def load_n_process_audio(input_path, output_dir, sr) -> Tuple[torch.Tensor, str]:
     assert os.path.exists(input_path)
@@ -79,5 +81,29 @@ def cut_n_save(audio_path, output_dir, csv_path):
     return audio_path, new_csv_path
 
 
+def separate_audio_n_video(filepath, output_dir):
+    assert os.path.exists(filepath)
+
+    video_ext = filepath.split(".")[-1]
+    filename = filepath.split(".")[0].split("/")[-1]
+    directory_save_file = os.path.join(output_dir, filename)
+    os.makedirs(directory_save_file, exist_ok=True)
+
+    video = VideoFileClip(filepath)
+    audio = video.audio
+
+    audio_save_path = os.path.join(directory_save_file, (filename + "_audio.wav"))
+    video_save_path = os.path.join(directory_save_file, (filename + "_video." + video_ext))
+
+    audio.write_audiofile(audio_save_path)
+    video.write_videofile(video_save_path, audio=False)
+
+    return [audio_save_path, video_save_path]
 
 
+
+#if __name__ == "__main__":
+    #filepath = "/home/comp/Рабочий стол/AutoDub/input/w2.mp4"
+    #output_dir = "/home/comp/Рабочий стол/AutoDub/output/video_n_audio_separated"
+
+    #separate_audio_n_video(filepath, output_dir)

@@ -112,6 +112,7 @@ wandb/
 *.srt
 *.arpa
 *.csv
+*.mp4
 
 # editor, os cache directory
 .vscode/

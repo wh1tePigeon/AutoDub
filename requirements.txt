@@ -22,3 +22,5 @@ torchvision
 tqdm
 wandb
 spafe
+moviepy
+TTS
