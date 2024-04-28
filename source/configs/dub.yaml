@@ -59,7 +59,7 @@ tts:
   output_dir: "$ROOT/output/tts"
   filename: 
   target_sr: 
-  checkpoint_path: $ROOT/checkpoints/tts/lazy"
+  checkpoint_path: "$ROOT/checkpoints/tts/lazy"
 
 align_audio:
   csv_filepath:

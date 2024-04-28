@@ -2,7 +2,7 @@ import json
 from collections import OrderedDict
 from itertools import repeat
 from pathlib import Path
-
+from omegaconf import DictConfig
 import logging
 import pandas as pd
 import torch
@@ -94,3 +94,12 @@ def get_logger(name, verbosity=2):
     logger = logging.getLogger(name)
     logger.setLevel(log_levels[verbosity])
     return logger
+
+
+def resolve_paths(cfg: DictConfig, root: str):
+    for key, part in cfg.items():
+        if isinstance(part, DictConfig):
+            cfg[key] = resolve_paths(part, root)
+        elif part is not None and type(part) == str and "$ROOT" in part:
+            cfg[key] = part.replace("$ROOT", root)
+    return cfg
