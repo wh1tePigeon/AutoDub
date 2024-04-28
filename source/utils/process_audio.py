@@ -6,6 +6,7 @@ from typing import Tuple
 import pandas as pd
 from moviepy.editor import VideoFileClip, AudioFileClip
 from pydub import AudioSegment
+from tqdm import tqdm
 
 
 def load_n_process_audio(filepath, output_dir, sr) -> Tuple[torch.Tensor, str]:
@@ -55,7 +56,7 @@ def cut_n_save(filepath, output_dir, csv_filepath):
     directory_save_file_segments = os.path.join(directory_save_file, "segments")
     os.makedirs(directory_save_file_segments, exist_ok=True)
 
-    for i, row in df.iterrows():
+    for i, row in tqdm(df.iterrows()):
         start = row["start"]
         end = row["end"]
         id = row["id"]
@@ -105,7 +106,7 @@ def align_audio_length(csv_filepath, output_dir, filename):
 
     df = pd.read_csv(csv_filepath, delimiter=';', encoding='utf-8')
 
-    for i, row in df.iterrows():
+    for i, row in tqdm(df.iterrows()):
         start = row["start"]
         end = row["end"]
         audio_path = row["tts_path"]
@@ -144,7 +145,7 @@ def concat_segments(speech_path, background_path, csv_filepath, filename,
 
     df = pd.read_csv(csv_filepath, delimiter=';', encoding='utf-8')
 
-    for _, row in df.iterrows():
+    for _, row in tqdm(df.iterrows()):
         start = row["start"]
         end = row["end"]
         segment_path = row["aligned_tts"]

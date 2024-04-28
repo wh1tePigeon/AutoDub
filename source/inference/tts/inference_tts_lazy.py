@@ -4,6 +4,7 @@ import torchaudio as ta
 import pandas as pd
 from TTS.tts.configs.xtts_config import XttsConfig
 from TTS.tts.models.xtts import Xtts
+from tqdm import tqdm
 
 
 def lazy_tts(csv_filepath, output_dir, filename, target_sr, checkpoint_path):
@@ -25,12 +26,11 @@ def lazy_tts(csv_filepath, output_dir, filename, target_sr, checkpoint_path):
     csv_filename = csv_filepath.split(".")[0].split("/")[-1]
     df = pd.read_csv(csv_filepath, delimiter=';', encoding='utf-8')
 
-    for i, row in df.iterrows():
+    for i, row in tqdm(df.iterrows()):
         refer_wav_path = row["path"]
         assert os.path.exists(refer_wav_path)
         text = row["translation"]
 
-        print("Processing segment " + str(i))
         gpt_cond_latent, speaker_embedding = model.get_conditioning_latents(audio_path=refer_wav_path)
 
         out = model.inference(
