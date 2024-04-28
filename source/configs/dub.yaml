@@ -29,12 +29,12 @@ vad:
 #asr:
 #  type: "ds2"
 #  n_gpu: 1
-#  model: "/home/comp/Рабочий стол/AutoDub/source/configs/asr/arch/model_conf.yaml"
+#  model: "$ROOT/source/configs/asr/arch/model_conf.yaml"
 #  sr: 16000
 #  filepath:
 #  boundaries:
-#  output_dir: "/home/comp/Рабочий стол/AutoDub/output/asr"
-#  checkpoint_path: "/home/comp/Рабочий стол/AutoDub/checkpoints/asr/ds2/main.pth"
+#  output_dir: "$ROOT/output/asr"
+#  checkpoint_path: "$ROOT/checkpoints/asr/ds2/main.pth"
 
 asr:
   type: "whisper"
