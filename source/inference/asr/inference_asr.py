@@ -11,6 +11,7 @@ from source.utils.util import prepare_device
 from source.utils.process_audio import load_n_process_audio
 from source.text_encoder.ctc_char_text_encoder import CTCCharTextEncoder
 from omegaconf import OmegaConf
+import whisper
 
 
 # get boundaries
@@ -40,22 +41,33 @@ def create_output_file(speech_segments, transcriptions, output_file_path):
 
 
 def inference_asr(cfg):
-    device, device_ids = prepare_device(cfg["n_gpu"])
-    text_encoder = CTCCharTextEncoder()
-    text_encoder.load_lm()
-    arch = OmegaConf.load(cfg["model"])
+    if cfg["type"] == "ds2":
+        device, device_ids = prepare_device(cfg["n_gpu"])
+        text_encoder = CTCCharTextEncoder()
+        text_encoder.load_lm()
+        arch = OmegaConf.load(cfg["model"])
 
-    arch["n_class"] = len(text_encoder)
+        arch["n_class"] = len(text_encoder)
 
-    model = instantiate(arch)
-    model = model.to(device)
-    if len(device_ids) > 1:
-        model = torch.nn.DataParallel(model, device_ids=device_ids)
+        model = instantiate(arch)
+        model = model.to(device)
+        if len(device_ids) > 1:
+            model = torch.nn.DataParallel(model, device_ids=device_ids)
 
-    checkpoint = torch.load(cfg["checkpoint_path"], map_location=device)
-    state_dict = checkpoint
-    model.load_state_dict(state_dict)
-    model.eval()
+        checkpoint = torch.load(cfg["checkpoint_path"], map_location=device)
+        state_dict = checkpoint
+        model.load_state_dict(state_dict)
+        model.eval()
+    elif cfg["type"] == "whisper":
+        m = cfg["model"]
+        if m not in ["tiny", "base", "small", "medium", "large", "large-v1", "large-v2", "large-v3",
+                     "tiny.en", "base.en", "small.en", "medium.en"]:
+            raise KeyError
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        model = whisper.load_model(name=m, download_root=cfg["checkpoint_path"]).to(device)
+        model.transcribe
+    else:
+        raise KeyError
 
     filepath = cfg["filepath"]
     output_dir = cfg["output_dir"]
@@ -69,7 +81,7 @@ def inference_asr(cfg):
 
         os.makedirs(directory_save_file, exist_ok=True)
 
-        def transcribe_audio(audio_segment: torch.Tensor):
+        def transcribe_audio_ds2(audio_segment: torch.Tensor):
             with torch.inference_mode():
                 wave2spec = ta.transforms.MelSpectrogram()
                 audio_segment_spec = wave2spec(audio_segment)
@@ -90,8 +102,15 @@ def inference_asr(cfg):
                 with multiprocessing.Pool(multiprocessing.cpu_count()) as pool:
                     result = text_encoder.ctc_beam_search_lm(log_probs, log_probs_length, beam_size=5000, pool=pool)[0]
                     print(result)
-                    print("-------------")
                     return result
+                
+        def transcribe_audio_whisper(audio_segment: torch.Tensor):
+            audio = whisper.pad_or_trim(audio_segment.flatten()).to(device)
+            mel = whisper.log_mel_spectrogram(audio)
+            options = whisper.DecodingOptions(language="en", without_timestamps=True)
+            result = model.decode(mel, options).text
+            print(result)
+            return result
 
 
         speech_segments = read_and_process_file(cfg["boundaries"])
@@ -101,7 +120,10 @@ def inference_asr(cfg):
             start = max(int(start_time * sr), 0)
             end = min(int(end_time * sr), audio.shape[-1])
             audio_segment = audio[..., start:end]
-            transcription = transcribe_audio(audio_segment)
+            if cfg["type"] == "ds2":
+                transcription = transcribe_audio_ds2(audio_segment)
+            elif cfg["type"] == "whisper":
+                transcription = transcribe_audio_whisper(audio_segment)
             transcriptions.append(transcription)
         output_file_path = os.path.join(directory_save_file, (filename + "_asr.csv"))
         create_output_file(speech_segments, transcriptions, output_file_path)
@@ -110,4 +132,13 @@ def inference_asr(cfg):
 
 
 if __name__ == "__main__":
-    inference_asr()
+    cfg = {
+            "type": "whisper",
+            "model": "small.en",
+            "sr": 16000,
+            "filepath": "/home/comp/Рабочий стол/AutoDub/output/bsrnn/test2_audio_mono/test2_audio_mono_speech.wav",
+            "boundaries": "/home/comp/Рабочий стол/AutoDub/output/vad/test2_audio_mono_speech_resampled/test2_audio_mono_speech_resampled_boundaries.txt",
+            "output_dir": "/home/comp/Рабочий стол/AutoDub/output/asr",
+            "checkpoint_path": "/home/comp/Рабочий стол/AutoDub/checkpoints/asr/whisper"
+            }
+    inference_asr(cfg)

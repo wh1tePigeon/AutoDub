@@ -115,6 +115,7 @@ wandb/
 *.mp4
 *.json
 *.md5
+*.pt
 
 # editor, os cache directory
 .vscode/
