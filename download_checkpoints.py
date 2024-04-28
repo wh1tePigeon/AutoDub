@@ -1,11 +1,9 @@
-import argparse
-from pathlib import Path
-import gdown
 import os
+import gdown
 
 
 def download(root):
-    link = ""
+    link = "https://drive.google.com/drive/folders/1Kc56V4eaJsIYLA-zWJMt7UzJuQfVecRW?usp=sharing"
     checkpoints_path = os.path.join(root, "checkpoints")
     os.makedirs(checkpoints_path, exist_ok=True)
     gdown.download_folder(url=link, output=checkpoints_path)

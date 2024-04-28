@@ -112,7 +112,7 @@ wandb/
 *.srt
 *.arpa
 *.csv
-*.mp4
+#*.mp4
 *.json
 *.md5
 *.pt

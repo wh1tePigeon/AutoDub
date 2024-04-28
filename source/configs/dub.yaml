@@ -1,4 +1,4 @@
-filepath:
+filepath: "$ROOT/input/test2.mp4"
 
 separate_audio:
   filepath:
