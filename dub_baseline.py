@@ -9,7 +9,7 @@ from source.inference import inference_bsrnn, inference_vad, inference_asr, tran
 from source.utils.process_audio import cut_n_save, separate_audio_n_video, align_audio_length, concat_segments
 
 #FILEPATH = "$ROOT/input/test.mp4"
-FILEPATH = ""
+FILEPATH = "$ROOT/input/1.wav"
 
 @hydra.main(config_path=str(CONFIGS_PATH), config_name="dub")
 def dub(cfg):
