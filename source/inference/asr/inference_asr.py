@@ -107,8 +107,8 @@ def inference_asr(cfg):
         def transcribe_audio_whisper(audio_segment: torch.Tensor):
             audio = whisper.pad_or_trim(audio_segment.flatten()).to(device)
             mel = whisper.log_mel_spectrogram(audio)
-            options = whisper.DecodingOptions(language="en", without_timestamps=True)
-            result = model.decode(mel, options).text
+            options = whisper.DecodingOptions(language="en", without_timestamps=False)
+            result = model.decode(mel, options)
             print(result)
             return result
 
@@ -136,9 +136,9 @@ if __name__ == "__main__":
             "type": "whisper",
             "model": "small.en",
             "sr": 16000,
-            "filepath": "/home/comp/Рабочий стол/AutoDub/output/bsrnn/test2_audio_mono/test2_audio_mono_speech.wav",
-            "boundaries": "/home/comp/Рабочий стол/AutoDub/output/vad/test2_audio_mono_speech_resampled/test2_audio_mono_speech_resampled_boundaries.txt",
-            "output_dir": "/home/comp/Рабочий стол/AutoDub/output/asr",
+            "filepath": "/home/comp/Рабочий стол/AutoDub/output/vad/1_mono_speech_resampled/1_mono_speech_resampled.wav",
+            "boundaries": "/home/comp/Рабочий стол/AutoDub/output/vad/1_mono_speech_resampled/1_mono_speech_resampled_boundaries.txt",
+            "output_dir": "/home/comp/Рабочий стол/AutoDub/output/asr2",
             "checkpoint_path": "/home/comp/Рабочий стол/AutoDub/checkpoints/asr/whisper"
             }
     inference_asr(cfg)
