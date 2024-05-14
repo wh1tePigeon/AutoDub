@@ -40,12 +40,6 @@ def get_embeddings(audio_filepath, csv_filepath):
     return [audio_filepath, csv_filepath, embeddings]
 
 
-def cluster_with_dbscan(embeddings, metric, eps, min_samples):
-    clustering = DBSCAN(metric=metric, eps=eps, min_samples=min_samples).fit(embeddings)
-    labels = clustering.labels_
-    return labels
-
-
 # def cluster_with_dbscan_def(embeddings, eps=310, min_samples=1):
 #     clustering = DBSCAN(eps=eps, min_samples=min_samples).fit(embeddings)
 #     labels = clustering.labels_
@@ -56,6 +50,12 @@ def cluster_with_dbscan(embeddings, metric, eps, min_samples):
 #     clustering = DBSCAN(metric='cosine', eps=eps, min_samples=min_samples).fit(embeddings)
 #     labels = clustering.labels_
 #     return labels
+
+
+def cluster_with_dbscan(embeddings, metric, eps, min_samples):
+    clustering = DBSCAN(metric=metric, eps=eps, min_samples=min_samples).fit(embeddings)
+    labels = clustering.labels_
+    return labels
 
 
 def cluster_with_kmeans(embeddings, n_clusters=None, random_state=0):
@@ -69,7 +69,7 @@ def cluster_with_kmeans(embeddings, n_clusters=None, random_state=0):
     return labels
 
 
-def label_speakers(audio_filepath, csv_filepath, cluster_type, cluster_cfg: dict):
+def label_speakers(audio_filepath, csv_filepath, output_dir, cluster_type, cluster_cfg: dict):
     _, _, embeddings = get_embeddings(audio_filepath, csv_filepath)
     if cluster_type == "dbscan":
         labels = cluster_with_dbscan(embeddings, **cluster_cfg)
@@ -77,23 +77,36 @@ def label_speakers(audio_filepath, csv_filepath, cluster_type, cluster_cfg: dict
     elif cluster_type == "kmeans":
         labels = cluster_with_kmeans(embeddings, **cluster_cfg)
 
-        
+    df = pd.read_csv(csv_filepath, delimiter=';', encoding='utf-8')
+    df["labels"] = labels
 
+    csv_filename = csv_filepath.split(".")[0].split("/")[-1]
+    directory_save_file = os.path.join(output_dir, csv_filename)
+    os.makedirs(directory_save_file, exist_ok=True)
+
+    new_csv_path = os.path.join(directory_save_file, (csv_filename + "_labeled.csv"))
+    df.to_csv(new_csv_path, sep=';', index=False, encoding='utf-8')
+    return new_csv_path
 
 
 if __name__ == "__main__":
     cfg = {
         "audio_filepath": "/home/comp/Рабочий стол/AutoDub/output/vad/1_mono_speech_resampled/1_mono_speech_resampled.wav",
-        "csv_filepath":  "/home/comp/Рабочий стол/AutoDub/output/asr2/1_mono_speech_resampled/1_mono_speech_resampled_asr.csv"
+        "csv_filepath":  "/home/comp/Рабочий стол/AutoDub/output/asr2/1_mono_speech_resampled/1_mono_speech_resampled_asr.csv",
+        "output_dir": "/home/comp/Рабочий стол/AutoDub/output/label",
+        "cluster_type": "dbscan",
+        "cluster_cfg": {
+            "metric": "cosine",
+            "eps": 0.5,
+            "min_samples": 1
+        }
     }
 
-    _, _, embs = get_embeddings(**cfg)
 
-
-    print(cluster_with_dbscan_def(embs))
-    print(cluster_with_dbscan_cosine(embs))
-    print(cluster_with_kmeans(embs, 4))
-
+    #print(cluster_with_dbscan_def(embs))
+    #print(cluster_with_dbscan_cosine(embs))
+    #print(cluster_with_kmeans(embs, 4))
+    label_speakers(**cfg)
 
 
 
