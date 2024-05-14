@@ -192,14 +192,58 @@ def concat_segments(speech_path, background_path, csv_filepath, filename,
     return [final_audio_save_path, final_video_save_path]
 
 
-if __name__ == "__main__":
-    speech_path = "/home/comp/Рабочий стол/AutoDub/output/bsrnn/1_mono/1_mono_speech.wav"
-    background_path = "/home/comp/Рабочий стол/AutoDub/output/bsrnn/1_mono/1_mono_background.wav"
-    csv_filepath = "/home/comp/Рабочий стол/AutoDub/output/aligned_audio/1_mono_speech_resampled/1_mono_speech_resampled_asr_g_tr_wpaths_tts_wpaths.csv"
-    filename = "1_mono_speech_resampled"
-    output_dir = "/home/comp/Рабочий стол/AutoDub/output/final"
-    join_video = False
-    video_path = ""
+def cut_n_save_by_label(filepath, output_dir, csv_filepath):
+    assert os.path.exists(filepath)
+    assert os.path.exists(csv_filepath)
 
-    concat_segments(speech_path, background_path, csv_filepath, filename,
-                    output_dir, join_video=False, video_path="")
+    audio, sr = ta.load(filepath)
+
+    filename = filepath.split(".")[0].split("/")[-1]
+    csv_filename = csv_filepath.split(".")[0].split("/")[-1]
+
+    df = pd.read_csv(csv_filepath, delimiter=';', encoding='utf-8')
+    directory_save_file = os.path.join(output_dir, filename)
+    directory_save_file_segments = os.path.join(directory_save_file, "segments_by_label")
+    os.makedirs(directory_save_file_segments, exist_ok=True)
+
+    for i, row in tqdm(df.iterrows()):
+        start = row["start"]
+        end = row["end"]
+        id = row["id"]
+        label = row["label"]
+        label_dirpath = os.path.join(directory_save_file_segments, ("speaker_" + str(label)))
+        os.makedirs(label_dirpath, exist_ok=True)
+
+        start = max(int(start * sr), 0)
+        end = min(int(end * sr), audio.shape[-1])
+        audio_segment = audio[..., start:end]
+
+        save_segment_name = filename + '_' + str(id) + ".wav"
+        save_segment_path = os.path.join(label_dirpath, save_segment_name)
+
+        ta.save(save_segment_path, audio_segment, sample_rate=sr)
+        df.at[i, "path"] = save_segment_path
+
+    new_csv_path = os.path.join(directory_save_file, (csv_filename + "_w_segmets_paths.csv"))
+    df.to_csv(new_csv_path, sep=';', index=False, encoding='utf-8')
+    return filepath, new_csv_path
+
+
+if __name__ == "__main__":
+    # speech_path = "/home/comp/Рабочий стол/AutoDub/output/bsrnn/1_mono/1_mono_speech.wav"
+    # background_path = "/home/comp/Рабочий стол/AutoDub/output/bsrnn/1_mono/1_mono_background.wav"
+    # csv_filepath = "/home/comp/Рабочий стол/AutoDub/output/aligned_audio/1_mono_speech_resampled/1_mono_speech_resampled_asr_g_tr_wpaths_tts_wpaths.csv"
+    # filename = "1_mono_speech_resampled"
+    # output_dir = "/home/comp/Рабочий стол/AutoDub/output/final"
+    # join_video = False
+    # video_path = ""
+
+    # concat_segments(speech_path, background_path, csv_filepath, filename,
+    #                 output_dir, join_video=False, video_path="")
+    cfg = {
+        "filepath": "/home/comp/Рабочий стол/AutoDub/output/vad/1_mono_speech_resampled/1_mono_speech_resampled.wav",
+        "csv_filepath":  "/home/comp/Рабочий стол/AutoDub/output/label/1_mono_speech_resampled_asr/1_mono_speech_resampled_asr_labeled.csv",
+        "output_dir": "/home/comp/Рабочий стол/AutoDub/output/cutted"
+    }
+
+    cut_n_save_by_label(**cfg)

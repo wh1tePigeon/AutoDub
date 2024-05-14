@@ -74,7 +74,7 @@ def label_speakers(audio_filepath, csv_filepath, output_dir, cluster_type, clust
         labels = cluster_with_kmeans(embeddings, **cluster_cfg)
 
     df = pd.read_csv(csv_filepath, delimiter=';', encoding='utf-8')
-    df["labels"] = labels
+    df["label"] = labels
 
     csv_filename = csv_filepath.split(".")[0].split("/")[-1]
     directory_save_file = os.path.join(output_dir, csv_filename)
