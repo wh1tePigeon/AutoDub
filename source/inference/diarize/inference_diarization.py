@@ -9,6 +9,11 @@ from source.utils.util import prepare_device
 from source.utils.process_audio import load_n_process_audio
 from speechbrain.inference.speaker import EncoderClassifier
 import pandas as pd
+from sklearn.cluster import DBSCAN, KMeans
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+import numpy as np
+
+
 
 
 def get_embeddings(audio_filepath, csv_filepath):
@@ -20,7 +25,7 @@ def get_embeddings(audio_filepath, csv_filepath):
     classifier = EncoderClassifier.from_hparams(source="speechbrain/spkrec-ecapa-voxceleb")
     embeddings = []
 
-    for index, row in df.iterrows():
+    for _, row in df.iterrows():
         start_time = row["start"]
         end_time = row["end"]
 
@@ -28,10 +33,51 @@ def get_embeddings(audio_filepath, csv_filepath):
         end = int(end_time * sr)
 
         segment = audio[..., start:end]
-        embedding = classifier.encode_batch(segment)
+        embedding = classifier.encode_batch(segment).squeeze()
         embeddings.append(embedding)
     
+    embeddings = torch.stack(embeddings)
     return [audio_filepath, csv_filepath, embeddings]
+
+
+def cluster_with_dbscan(embeddings, metric, eps, min_samples):
+    clustering = DBSCAN(metric=metric, eps=eps, min_samples=min_samples).fit(embeddings)
+    labels = clustering.labels_
+    return labels
+
+
+# def cluster_with_dbscan_def(embeddings, eps=310, min_samples=1):
+#     clustering = DBSCAN(eps=eps, min_samples=min_samples).fit(embeddings)
+#     labels = clustering.labels_
+#     return labels
+
+
+# def cluster_with_dbscan_cosine(embeddings, eps=0.5, min_samples=1):
+#     clustering = DBSCAN(metric='cosine', eps=eps, min_samples=min_samples).fit(embeddings)
+#     labels = clustering.labels_
+#     return labels
+
+
+def cluster_with_kmeans(embeddings, n_clusters=None, random_state=0):
+    assert n_clusters is not None
+
+    scaler = StandardScaler()
+    scaled_embeddings = scaler.fit_transform(embeddings)
+
+    kmeans = KMeans(n_clusters=n_clusters, random_state=random_state).fit(scaled_embeddings)
+    labels = kmeans.labels_
+    return labels
+
+
+def label_speakers(audio_filepath, csv_filepath, cluster_type, cluster_cfg: dict):
+    _, _, embeddings = get_embeddings(audio_filepath, csv_filepath)
+    if cluster_type == "dbscan":
+        labels = cluster_with_dbscan(embeddings, **cluster_cfg)
+
+    elif cluster_type == "kmeans":
+        labels = cluster_with_kmeans(embeddings, **cluster_cfg)
+
+        
 
 
 
@@ -41,8 +87,12 @@ if __name__ == "__main__":
         "csv_filepath":  "/home/comp/Рабочий стол/AutoDub/output/asr2/1_mono_speech_resampled/1_mono_speech_resampled_asr.csv"
     }
 
-    get_embeddings(**cfg)
-    print("kurwa")
+    _, _, embs = get_embeddings(**cfg)
+
+
+    print(cluster_with_dbscan_def(embs))
+    print(cluster_with_dbscan_cosine(embs))
+    print(cluster_with_kmeans(embs, 4))
 
 
 
