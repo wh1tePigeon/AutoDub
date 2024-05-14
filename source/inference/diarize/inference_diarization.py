@@ -114,7 +114,7 @@ if __name__ == "__main__":
 # from pyannote.audio import Pipeline
 # pipeline = Pipeline.from_pretrained(
 #     "pyannote/speaker-diarization-3.1",
-#     use_auth_token="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")
+#     use_auth_token="")
 
 
 # # apply pretrained pipeline
