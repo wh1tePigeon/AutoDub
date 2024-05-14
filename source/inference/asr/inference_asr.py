@@ -29,11 +29,11 @@ def read_and_process_file(file_path):
 
 # write output file
 def create_output_file(speech_segments, transcriptions, output_file_path):
-    data = [{'id' : i, 'start': speech_segment[0], 'end': speech_segment[1], 'transcription': transcription}
+    data = [{'id' : i, 'start': speech_segment[0], 'end': speech_segment[1], 'text': transcription}
         for i, speech_segment, transcription in zip(range(len(speech_segments)), speech_segments, transcriptions)]
 
     with open(output_file_path, 'w', newline='', encoding='utf-8') as csvfile:
-        fieldnames = ['id', 'start', 'end', 'transcription']
+        fieldnames = ['id', 'start', 'end', 'text']
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames, delimiter=';')
 
         writer.writeheader()
