@@ -1,5 +1,4 @@
 import os
-import csv
 import sys
 import torch
 import torchaudio as ta
@@ -10,10 +9,7 @@ from source.utils.process_audio import load_n_process_audio
 from speechbrain.inference.speaker import EncoderClassifier
 import pandas as pd
 from sklearn.cluster import DBSCAN, KMeans
-from sklearn.preprocessing import StandardScaler, LabelEncoder
-import numpy as np
-
-
+from sklearn.preprocessing import StandardScaler
 
 
 def get_embeddings(audio_filepath, csv_filepath):
