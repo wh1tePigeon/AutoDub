@@ -107,8 +107,8 @@ def inference_asr(cfg):
         def transcribe_audio_whisper(audio_segment: torch.Tensor):
             audio = whisper.pad_or_trim(audio_segment.flatten()).to(device)
             mel = whisper.log_mel_spectrogram(audio)
-            options = whisper.DecodingOptions(language="en", without_timestamps=False)
-            result = model.decode(mel, options)
+            options = whisper.DecodingOptions(language="en", without_timestamps=True)
+            result = model.decode(mel, options).text
             print(result)
             return result
 
