@@ -24,8 +24,8 @@ asr_wtime:
   checkpoint_path: "$ROOT/checkpoints/asr/whisper"
 
 diarize:
-  audio_filepath:
-  csv_filepath:
+  audio_filepath: "$ROOT/output/asr/test2_audio_mono_speech_resampled/test2_audio_mono_speech_resampled.wav"
+  csv_filepath: "$ROOT/output/asr/test2_audio_mono_speech_resampled/test2_audio_mono_speech_resampled_asr.csv"
   output_dir: "$ROOT/output/label"
   cluster_type: "dbscan"
   cluster_cfg:
