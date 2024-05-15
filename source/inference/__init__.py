@@ -5,3 +5,4 @@ from source.inference.vad.inference_vad import inference_vad
 from source.inference.translate.inference_translate import translate_file
 from source.inference.tts.inference_tts_lazy import lazy_tts
 from source.inference.tts.inference_tts import tts
+from source.inference.diarize.inference_diarization import label_speakers

@@ -4,8 +4,8 @@ import hydra
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent))
 from source.utils.util import CONFIGS_PATH, resolve_paths
-from source.inference import inference_bsrnn, inference_vad, inference_asr, translate_file, tts
-from source.utils.process_audio import cut_n_save, separate_audio_n_video, align_audio_length, concat_segments
+from source.inference import inference_bsrnn, inference_asr_wtime, translate_file, tts, label_speakers
+from source.utils.process_audio import cut_n_save_by_label, separate_audio_n_video, align_audio_length, concat_segments
 
 #FILEPATH = "$ROOT/input/test.mp4"
 FILEPATH = "$ROOT/input/1.wav"
@@ -40,29 +40,22 @@ def dub(cfg):
     filename = speech_path.split(".")[0].split("/")[-1]
 
     print("Speech recognition whith whisper")
-    cfg["asr"]["filepath"] = filepath
-    #cfg["asr"]["boundaries"] = vad_boundaries_path
-    transcribed_path = inference_asr(cfg["asr"])
+    cfg["asr_wtime"]["filepath"] = speech_path
+    transcribed_path = inference_asr_wtime(cfg["asr_wtime"])
 
-
-    
-    print("Detecting voice activity")
-    cfg["vad"]["filepath"] = speech_path
-    filepath, vad_boundaries_path = inference_vad(cfg["vad"])
-
-    print("Speech recognition")
-    cfg["asr"]["filepath"] = filepath
-    cfg["asr"]["boundaries"] = vad_boundaries_path
-    transcribed_path = inference_asr(cfg["asr"])
+    print("Diarization")
+    cfg["diarize"]["audio_filepath"] = speech_path
+    cfg["diarize"]["csv_filepath"] = transcribed_path
+    diarized_csv_path = label_speakers(**cfg["diarize"])
 
     print("Translating")
-    cfg["tr"]["filepath"] = transcribed_path
+    cfg["tr"]["filepath"] = diarized_csv_path
     translated_csv_path = translate_file(cfg["tr"])
 
     print("Cutting audio")
     cfg["cut"]["filepath"] = cfg["asr"]["filepath"]
     cfg["cut"]["csv_filepath"] = translated_csv_path
-    _, cutted_csv_path = cut_n_save(**cfg["cut"])
+    _, cutted_csv_path = cut_n_save_by_label(**cfg["cut"])
 
     print("TTS")
     cfg["tts"]["csv_filepath"] = cutted_csv_path

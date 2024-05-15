@@ -16,43 +16,35 @@ bsrnn:
   hop_size_second: 0.5
   batch_size: 6
 
-vad:
-  sr: 16000
-  filepath:
-  output_dir: "$ROOT/output/vad"
-  checkpoint_path: "$ROOT/checkpoints/vad"
-  activation_th: 0.8
-  deactivation_th: 0.0
-  close_th: 0.250
-  len_th: 0.250
-
-#asr:
-#  type: "ds2"
-#  n_gpu: 1
-#  model: "$ROOT/source/configs/asr/arch/model_conf.yaml"
-#  sr: 16000
-#  filepath:
-#  boundaries:
-#  output_dir: "$ROOT/output/asr"
-#  checkpoint_path: "$ROOT/checkpoints/asr/ds2/main.pth"
-
-asr:
-  type: "whisper"
+asr_wtime:
   model: "small.en"
   sr: 16000
   filepath:
-  boundaries:
   output_dir: "$ROOT/output/asr"
   checkpoint_path: "$ROOT/checkpoints/asr/whisper"
+
+diarize:
+  audio_filepath:
+  csv_filepath:
+  output_dir: "$ROOT/output/label"
+  cluster_type: "dbscan"
+  cluster_cfg:
+    metric: "cosine"
+    eps: 0.5
+    min_samples: 1
   
 tr:
   filepath:
   output_dir : "$ROOT/output/translated/"
+  use: "opusmt"
+  checkpoint_path: "$ROOT/checkpoints/translate/opusmt"
 
 cut:
   filepath:
   output_dir: "$ROOT/output/cutted/"
   csv_filepath:
+  save_segments: True
+  save_common: True
 
 tts:
   csv_filepath: 
