@@ -7,7 +7,7 @@ from TTS.tts.models.xtts import Xtts
 from tqdm import tqdm
 
 
-def lazy_tts(csv_filepath, output_dir, filename, target_sr, checkpoint_path):
+def tts(csv_filepath, output_dir, filename, target_sr, checkpoint_path):
     assert os.path.exists(csv_filepath)
 
     config = XttsConfig()
@@ -80,4 +80,4 @@ if __name__ == "__main__":
     output_dir = "/home/comp/Рабочий стол/AutoDub/output/tts/lazy"
     filename = "1_mono_speech_resampled"
     checkpoint_path = "/home/comp/Рабочий стол/AutoDub/checkpoints/tts/lazy"
-    lazy_tts(csv_filepath, output_dir, filename, 44100, checkpoint_path)
+    tts(csv_filepath, output_dir, filename, 44100, checkpoint_path)
