@@ -87,14 +87,18 @@ def label_speakers(audio_filepath, csv_filepath, output_dir, cluster_type, clust
 
 if __name__ == "__main__":
     cfg = {
-        "audio_filepath": "/home/comp/Рабочий стол/AutoDub/output/vad/1_mono_speech_resampled/1_mono_speech_resampled.wav",
-        "csv_filepath":  "/home/comp/Рабочий стол/AutoDub/output/asr2/1_mono_speech_resampled/1_mono_speech_resampled_asr.csv",
+        "audio_filepath": "/home/comp/Рабочий стол/AutoDub/output/asr/test2_audio_mono_speech_resampled/test2_audio_mono_speech_resampled.wav",
+        "csv_filepath":  "/home/comp/Рабочий стол/AutoDub/output/asr/test2_audio_mono_speech_resampled/test2_audio_mono_speech_resampled_asr.csv",
         "output_dir": "/home/comp/Рабочий стол/AutoDub/output/label",
-        "cluster_type": "dbscan",
+        # "cluster_type": "dbscan",
+        # "cluster_cfg": {
+        #     "metric": "cosine",
+        #     "eps": 0.8,
+        #     "min_samples": 1
+        # }
+        "cluster_type": "kmeans",
         "cluster_cfg": {
-            "metric": "cosine",
-            "eps": 0.5,
-            "min_samples": 1
+            "n_clusters": 2    
         }
     }
 

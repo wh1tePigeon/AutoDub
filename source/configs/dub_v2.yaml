@@ -30,7 +30,7 @@ diarize:
   cluster_type: "dbscan"
   cluster_cfg:
     metric: "cosine"
-    eps: 0.5
+    eps: 0.75
     min_samples: 1
   
 tr:
