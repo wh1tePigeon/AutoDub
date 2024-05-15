@@ -21,6 +21,8 @@ def get_embeddings(audio_filepath, csv_filepath):
     classifier = EncoderClassifier.from_hparams(source="speechbrain/spkrec-ecapa-voxceleb")
     embeddings = []
 
+    new_raw_wav = torch.empty(1,0)
+
     for _, row in df.iterrows():
         start_time = row["start"]
         end_time = row["end"]
@@ -31,6 +33,14 @@ def get_embeddings(audio_filepath, csv_filepath):
         segment = audio[..., start:end]
         embedding = classifier.encode_batch(segment).squeeze()
         embeddings.append(embedding)
+
+        new_raw_wav = torch.cat((new_raw_wav, segment), dim=-1)
+        #zeros = torch.zeros(1, 3 * sr) # 3 sec silence between speech
+        #new_raw_wav = torch.cat((new_raw_wav, zeros), dim=-1)
+
+    tmp = "/home/comp/Рабочий стол/AutoDub/output/tmp/tmp.wav"
+    ta.save(tmp, new_raw_wav, sample_rate=sr)
+
     
     embeddings = torch.stack(embeddings)
     return [audio_filepath, csv_filepath, embeddings]
@@ -106,20 +116,23 @@ if __name__ == "__main__":
     #print(cluster_with_dbscan_def(embs))
     #print(cluster_with_dbscan_cosine(embs))
     #print(cluster_with_kmeans(embs, 4))
-    label_speakers(**cfg)
+    #label_speakers(**cfg)
+    t2 = "/home/comp/Рабочий стол/AutoDub/output/asr/1_mono_speech_resampled/1_mono_speech_resampled_asr.csv"
+    t1 = "/home/comp/Рабочий стол/AutoDub/output/vad/1_mono_speech_resampled/1_mono_speech_resampled.wav"
+    #_, _ , embs = get_embeddings(t1, t2)
 
 
 
 
-# from pyannote.audio import Pipeline
-# pipeline = Pipeline.from_pretrained(
-#     "pyannote/speaker-diarization-3.1",
-#     use_auth_token="")
+    from pyannote.audio import Pipeline
+    pipeline = Pipeline.from_pretrained(
+        "pyannote/speaker-diarization-3.1",
+        use_auth_token="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")
 
 
-# # apply pretrained pipeline
-# diarization = pipeline("/home/comp/Рабочий стол/AutoDub/output/vad/1_mono_speech_resampled/1_mono_speech_resampled.wav")
+    # apply pretrained pipeline
+    diarization = pipeline("/home/comp/Рабочий стол/AutoDub/output/tmp/tmp.wav")
 
-# # print the result
-# for turn, _, speaker in diarization.itertracks(yield_label=True):
-#     print(f"start={turn.start:.1f}s stop={turn.end:.1f}s speaker_{speaker}")
+    # print the result
+    for turn, _, speaker in diarization.itertracks(yield_label=True):
+        print(f"start={turn.start:.1f}s stop={turn.end:.1f}s speaker_{speaker}")
