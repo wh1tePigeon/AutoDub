@@ -266,7 +266,7 @@ if __name__ == "__main__":
     #                 output_dir, join_video=False, video_path="")
     cfg = {
         "filepath": "/home/comp/Рабочий стол/AutoDub/output/vad/1_mono_speech_resampled/1_mono_speech_resampled.wav",
-        "csv_filepath":  "/home/comp/Рабочий стол/AutoDub/output/label/1_mono_speech_resampled_asr/1_mono_speech_resampled_asr_labeled.csv",
+        "csv_filepath":  "/home/comp/Рабочий стол/AutoDub/output/translated/1_mono_speech_resampled_asr_labeled/1_mono_speech_resampled_asr_labeled_tr.csv",
         "output_dir": "/home/comp/Рабочий стол/AutoDub/output/cutted"
     }
 
