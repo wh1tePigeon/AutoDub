@@ -192,7 +192,7 @@ def concat_segments(speech_path, background_path, csv_filepath, filename,
     return [final_audio_save_path, final_video_save_path]
 
 
-def cut_n_save_by_label(filepath, output_dir, csv_filepath):
+def cut_n_save_by_label(filepath, output_dir, csv_filepath, save_segments=True, save_common=True):
     assert os.path.exists(filepath)
     assert os.path.exists(csv_filepath)
 
@@ -206,6 +206,9 @@ def cut_n_save_by_label(filepath, output_dir, csv_filepath):
     directory_save_file_segments = os.path.join(directory_save_file, "segments_by_label")
     os.makedirs(directory_save_file_segments, exist_ok=True)
 
+    common_by_label = {}
+    common_by_label_savepath = {}
+
     for i, row in tqdm(df.iterrows()):
         start = row["start"]
         end = row["end"]
@@ -218,15 +221,36 @@ def cut_n_save_by_label(filepath, output_dir, csv_filepath):
         end = min(int(end * sr), audio.shape[-1])
         audio_segment = audio[..., start:end]
 
+        if label in common_by_label:
+            common_by_label[label] = torch.cat((common_by_label[label], audio_segment), dim=-1)
+        else:
+            common_by_label[label] = audio_segment
+
         save_segment_name = filename + '_' + str(id) + ".wav"
+        save_common_path = os.path.join(label_dirpath, ("speaker_" + str(label) + "_common.wav"))
+
+        if label not in common_by_label_savepath:
+            common_by_label_savepath[label] = save_common_path
+
         save_segment_path = os.path.join(label_dirpath, save_segment_name)
 
-        ta.save(save_segment_path, audio_segment, sample_rate=sr)
-        df.at[i, "path"] = save_segment_path
+        if save_segments:
+            ta.save(save_segment_path, audio_segment, sample_rate=sr)
+            df.at[i, "path"] = save_segment_path
+        if save_common:
+            df.at[i, "path_to_common"] = save_common_path
+
+    if save_common:
+        for label, common in common_by_label.items():
+            savepath = common_by_label_savepath[label]
+            ta.save(savepath, common, sample_rate=sr)
 
     new_csv_path = os.path.join(directory_save_file, (csv_filename + "_w_segmets_paths.csv"))
     df.to_csv(new_csv_path, sep=';', index=False, encoding='utf-8')
     return filepath, new_csv_path
+
+
+
 
 
 if __name__ == "__main__":
