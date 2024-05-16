@@ -34,4 +34,27 @@ if __name__ == "__main__":
         "dirpath": "",
         "output_dir": ""
     }
-    process_dir_dubbed(**cfg)
+    #process_dir_dubbed(**cfg)
+    
+    #path = "/home/comp/Загрузки/Harry Potter and the Chamber of Secrets [Extended]/Audio/ORIGINAL.dts"
+    # path1 = "/home/comp/Рабочий стол/RaM/output_1st_track.wav"
+    # path2 = "/home/comp/Рабочий стол/RaM/rm1.mkv.part"
+    # audio, sr = ta.load(path1)
+    # segment = audio[...,:sr * 30]
+    # save_path= "/home/comp/Рабочий стол/RaM/segment.wav"
+    # ta.save(save_path, segment, sample_rate=sr)
+
+    path = "/home/comp/Рабочий стол/RaM/segment.wav"
+    dirpath = "/home/comp/Рабочий стол/RaM"
+    segment, sr = ta.load(path)
+
+    for i in range(segment.shape[0]):
+        mono = segment[i]
+        mono = mono.reshape(1, -1)
+        mono_save_path = os.path.join(dirpath, ("segment_" + str(i) + ".wav"))
+        ta.save(mono_save_path, mono, sample_rate=sr)
+
+    #print(audio.shape)
+    print(sr)
+
+   # ffmpeg -i "/home/comp/Рабочий стол/ldr/ldr.mkv" -map 0:a:1 "/home/comp/Рабочий стол/RaM/output_1st_track.wav"
