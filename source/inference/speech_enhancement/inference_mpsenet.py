@@ -5,13 +5,13 @@ import json
 from re import S
 import torch
 import librosa
-from env import AttrDict
-from datasets.dataset import mag_pha_stft, mag_pha_istft
 import soundfile as sf
 import sys
 from pathlib import Path
+import torchaudio as ta
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent))
 from source.model.mpsenet.generator import MPNet
+from source.datasets.mpsenet.dataset import mag_pha_stft, mag_pha_istft
 from source.utils.util import prepare_device
 from hydra.utils import instantiate
 
@@ -33,33 +33,23 @@ def inference_mpsenet(cfg):
     sr = cfg["sampling_rate"]
 
     if os.path.isfile(filepath):
-        audio, filepath = load_n_process_audio(filepath, output_dir, sr)
-        audio = audio.reshape(1, 1, -1)
-  
-        # move audio to gpu
+       # audio, sr = librosa.load(filepath, sr)
+        audio, fs = ta.load(filepath)
+        if fs != sr:
+            audio = ta.functional.resample(audio, fs, sr)
+            fs = sr
+
+        # move audio to device
         audio = audio.to(device)
 
         with torch.inference_mode():
-            def forward(audio):
-                _, output = model({"audio": {"mixture": audio},})
-                return output["audio"]
-            
-            if audio.shape[-1] / sr > 12:
-                fader = OverlapAddFader(window_type=cfg["window_type"],
-                                        chunk_size_second=cfg["chunk_size_second"],
-                                        hop_size_second=cfg["hop_size_second"],
-                                        fs=sr,
-                                        batch_size=cfg["batch_size"])
-                
-                output = fader(audio,
-                                lambda a: forward(a))
-                
-            else:
-                output = forward(audio)
-            
-            speech = output["audio"]["speech"]
-            speech = speech.reshape(1, -1)
-            audio = audio.reshape(1, -1)
+            norm_factor = torch.sqrt(len(audio) / torch.sum(audio ** 2.0)).to(device)
+            audio = (audio * norm_factor).unsqueeze(0)
+            noisy_amp, noisy_pha, noisy_com = mag_pha_stft(audio, **cfg["stft"])
+            amp_g, pha_g, com_g = model(noisy_amp, noisy_pha)
+            audio_clean = mag_pha_istft(amp_g, pha_g, **cfg["stft"])
+            speech = audio_clean / norm_factor
+
             background = audio - speech
 
             filename = filepath.split(".")[0].split("/")[-1]
