@@ -1,6 +1,6 @@
 filepath:
-output_dir:
-checkpoint_path:
+output_dir: "/home/comp/Рабочий стол/AutoDub/output/enhanced"
+checkpoint_path: "/home/comp/Рабочий стол/AutoDub/checkpoints/mpsenet/g_best.pth"
 
 
 n_gpu: 0
@@ -18,11 +18,10 @@ beta: 2.0
 sampling_rate: 16000
 segment_size: 32000
 
-stft:
-  n_fft: 400
-  hop_size: 100
-  win_size: 400
-  compress_factor: 0.3
+n_fft: 400
+hop_size: 100
+win_size: 400
+compress_factor: 0.3
 
 num_workers: 4
 
