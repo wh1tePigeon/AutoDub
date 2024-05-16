@@ -32,7 +32,6 @@ def inference_mpsenet(cfg):
     sr = cfg["sampling_rate"]
 
     if os.path.isfile(filepath):
-       # audio, sr = librosa.load(filepath, sr)
         audio, fs = ta.load(filepath)
         if fs != sr:
             audio = ta.functional.resample(audio, fs, sr)
