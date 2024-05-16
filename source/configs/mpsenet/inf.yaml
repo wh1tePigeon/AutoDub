@@ -1,3 +1,8 @@
+filepath:
+output_dir:
+checkpoint_path:
+
+
 n_gpu: 0
 batch_size: 4
 learning_rate: 0.0005

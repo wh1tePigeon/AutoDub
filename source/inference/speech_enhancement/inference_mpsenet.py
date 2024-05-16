@@ -1,11 +1,7 @@
-import glob
 import os
-import argparse
-import json
 from re import S
 import torch
-import librosa
-import soundfile as sf
+import hydra
 import sys
 from pathlib import Path
 import torchaudio as ta
@@ -13,7 +9,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent))
 from source.model.mpsenet.generator import MPNet
 from source.datasets.mpsenet.dataset import mag_pha_stft, mag_pha_istft
 from source.utils.util import prepare_device
-from hydra.utils import instantiate
+from source.utils.util import CONFIGS_PATH
+
+
+CONFIG_MPSNET = CONFIGS_PATH / 'mpsnet'
 
 
 def inference_mpsenet(cfg):
@@ -69,35 +68,9 @@ def inference_mpsenet(cfg):
             return [speech_save_path, background_save_path]
 
 
-
-def main():
-    print('Initializing Inference Process..')
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--input_clean_wavs_dir', default='VoiceBank+DEMAND/wavs_clean')
-    parser.add_argument('--input_noisy_wavs_dir', default='VoiceBank+DEMAND/wav_noisy')
-    parser.add_argument('--input_test_file', default='VoiceBank+DEMAND/test.txt')
-    parser.add_argument('--output_dir', default='generated_files')
-    parser.add_argument('--checkpoint_file', required=True)
-    a = parser.parse_args()
-
-    config_file = os.path.join(os.path.split(a.checkpoint_file)[0], 'config.json')
-    with open(config_file) as f:
-        data = f.read()
-
-    global h
-    json_config = json.loads(data)
-    h = AttrDict(json_config)
-
-    torch.manual_seed(h.seed)
-    global device
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed(h.seed)
-        device = torch.device('cuda')
-    else:
-        device = torch.device('cpu')
-
-    inference(a)
+@hydra.main(config_path=str(CONFIG_MPSNET), config_name="inf")
+def main(cfg):
+    inference_mpsenet(cfg)
 
 
 if __name__ == '__main__':
