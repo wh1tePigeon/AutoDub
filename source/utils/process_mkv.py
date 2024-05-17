@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 from tqdm import tqdm
 import ffmpeg
-
+import json
 
 
 def process_mkv_file(filepath, output_dir, languages, extract_srt=True, extract_video=False):
@@ -72,8 +72,34 @@ def process_mkv_file(filepath, output_dir, languages, extract_srt=True, extract_
 
 
 
-def process_mkv_dir(dirpath, output_dir):
-    return 0
+def process_mkv_dir(dirpath, output_dir, languages, extract_srt=True, extract_video=False):
+    assert os.path.exists(dirpath)
+
+    dir_meta = {"dirpath": str(dirpath)}
+    files_metadata = []
+    for filename in os.listdir(dirpath):
+        filepath = os.path.join(dirpath, filename)
+        if os.path.isfile(filepath):
+            ext = filename.split(".")[-1]
+            if ext == "mkv":
+                print("Processing " + filename)
+                out_path = os.path.join(output_dir, filename.split(".")[0])
+                audio_paths, subs_paths, video_paths = process_mkv_file(filepath, out_path,
+                                                                        languages, extract_srt=True,
+                                                                        extract_video=False)
+                meta = {"mkvfilepath": filepath}
+                meta["audio_paths"] = [str(path) for path in audio_paths]
+                meta["subs_paths"] = [str(path) for path in subs_paths]
+                meta["video_paths"] = [str(path) for path in video_paths]
+                files_metadata.append(meta)
+
+    dir_meta["files"] = files_metadata
+    meta_savepath = os.path.join(output_dir, "data.json")
+
+    with open(meta_savepath, 'w', encoding='utf-8') as f:
+        json.dump(dir_meta, f, ensure_ascii=False, indent=4)
+    
+    return meta_savepath
 
 
 if __name__ == "__main__":
@@ -83,4 +109,11 @@ if __name__ == "__main__":
         "output_dir" : "/home/comp/Рабочий стол/ffmpeg"
     }
 
-    process_mkv_file(**cfg)
+    cfg2 = {
+        "dirpath" : "/home/comp/Рабочий стол/test_ff",
+        "languages": ["eng", "rus"],
+        "output_dir" : "/home/comp/Рабочий стол/ffmpeg"
+    }
+
+    process_mkv_dir(**cfg2)
+    #process_mkv_file(**cfg)
