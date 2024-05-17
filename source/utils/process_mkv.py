@@ -88,8 +88,8 @@ def process_mkv_dir(dirpath, output_dir, languages, extract_srt=True, extract_vi
                 print("Processing " + filename)
                 out_path = os.path.join(output_dir, filename.split(".")[0])
                 video_paths, for_each_lang = process_mkv_file(filepath, out_path,
-                                                                        languages, extract_srt=True,
-                                                                        extract_video=False)
+                                                              languages, extract_srt,
+                                                              extract_video)
                 meta = {"mkvfilepath": filepath}
                 meta["video_paths"] = video_paths
                 meta["languages"] = for_each_lang
