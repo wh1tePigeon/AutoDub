@@ -97,8 +97,41 @@ if __name__ == "__main__":
 
     #get_speech(**cfg)
 
+    path_orig = "/home/comp/Рабочий стол/AutoDub/output/enhanced/segment_2_cutted/segment_2_cutted_orig.wav"
+    path2_speech = "/home/comp/Рабочий стол/AutoDub/output/enhanced/speech_normalized.wav"
 
+    # from pydub import AudioSegment
+    # import numpy as np
 
+    # def calculate_average_volume(segment):
+    #     return segment.dBFS
+
+    # # Загрузка аудиофайлов
+    # audio1 = AudioSegment.from_file(path_orig)
+    # audio2 = AudioSegment.from_file(path2_speech)
+
+    # # Вычисление средней громкости
+    # average_volume1 = calculate_average_volume(audio1)
+    # average_volume2 = calculate_average_volume(audio2)
+
+    # # Выравнивание громкости
+    # if average_volume1 > average_volume2:
+    #     audio2 = audio2 + (average_volume1 - average_volume2)
+    # elif average_volume1 < average_volume2:
+    #     audio1 = audio1 + (average_volume2 - average_volume1)
+
+    # #back = audio1 - audio2
+
+    # # Сохранение результатов
+    # #back.export("/home/comp/Рабочий стол/AutoDub/output/enhanced/back_normalized.wav", format="wav")
+    # audio2.export("/home/comp/Рабочий стол/AutoDub/output/enhanced/speech_normalized.wav", format="wav")
+
+    orig, sr = ta.load(path_orig)
+    speech, sr = ta.load(path2_speech)
+
+    back = orig - speech
+    back_path = "/home/comp/Рабочий стол/AutoDub/output/enhanced/back.wav"
+    ta.save(back_path, back, sr)
 
 
     #process_dir_dubbed(**cfg)
