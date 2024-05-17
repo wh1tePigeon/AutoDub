@@ -28,3 +28,4 @@ moviepy
 TTS
 pydub
 openai-whisper
+ffmpeg-python
