@@ -41,22 +41,25 @@ def process_mkv_file(filepath, output_dir, languages, extract_srt=True, extract_
                 subs_tracks.append(track)
 
     ff = ffmpeg.input(filepath)
-    audio_save_paths = []
-    subs_save_paths = []
     video_save_paths = []
+    for_each_lang = {lang: {"audio_paths": [], "subs_paths": []} for lang in languages}
 
     for track in audio_tracks:
-        track_filename = filename + "_audio_" + str(track["index"]) + "_" + track["tags"]["language"] + ".wav"
+        lang = track["tags"]["language"]
+        track_filename = filename + "_audio_" + str(track["index"]) + "_" + lang + ".wav"
         track_filepath = os.path.join(output_dir, track_filename)
-        audio_save_paths.append(track_filepath)
+
+        for_each_lang[lang]["audio_paths"].append(track_filepath)
         m = "0:" + str(track["index"])
         ff.output(track_filepath, **{"map": m}).run()
     
     if extract_srt:
         for track in subs_tracks:
-            track_filename = filename + "_subs_" + str(track["index"]) + "_" + track["tags"]["language"] + ".srt"
+            lang = track["tags"]["language"]
+            track_filename = filename + "_subs_" + str(track["index"]) + "_" + lang + ".srt"
             track_filepath = os.path.join(output_dir, track_filename)
-            subs_save_paths.append(track_filepath)
+            
+            for_each_lang[lang]["subs_paths"].append(track_filepath)
             m = "0:" + str(track["index"])
             ff.output(track_filepath, **{"map": m}).run()
 
@@ -68,7 +71,7 @@ def process_mkv_file(filepath, output_dir, languages, extract_srt=True, extract_
             m = "0:" + str(track["index"])
             ff.output(track_filepath, **{"map": m}).run()
 
-    return audio_save_paths, subs_save_paths, video_save_paths
+    return video_save_paths, for_each_lang
 
 
 
@@ -84,13 +87,12 @@ def process_mkv_dir(dirpath, output_dir, languages, extract_srt=True, extract_vi
             if ext == "mkv":
                 print("Processing " + filename)
                 out_path = os.path.join(output_dir, filename.split(".")[0])
-                audio_paths, subs_paths, video_paths = process_mkv_file(filepath, out_path,
+                video_paths, for_each_lang = process_mkv_file(filepath, out_path,
                                                                         languages, extract_srt=True,
                                                                         extract_video=False)
                 meta = {"mkvfilepath": filepath}
-                meta["audio_paths"] = [str(path) for path in audio_paths]
-                meta["subs_paths"] = [str(path) for path in subs_paths]
-                meta["video_paths"] = [str(path) for path in video_paths]
+                meta["video_paths"] = video_paths
+                meta["languages"] = for_each_lang
                 files_metadata.append(meta)
 
     dir_meta["files"] = files_metadata
