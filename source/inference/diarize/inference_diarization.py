@@ -21,7 +21,7 @@ def get_embeddings(audio_filepath, csv_filepath):
     classifier = EncoderClassifier.from_hparams(source="speechbrain/spkrec-ecapa-voxceleb")
     embeddings = []
 
-    new_raw_wav = torch.empty(1,0)
+    #new_raw_wav = torch.empty(1,0)
 
     for _, row in df.iterrows():
         start_time = row["start"]
@@ -34,28 +34,16 @@ def get_embeddings(audio_filepath, csv_filepath):
         embedding = classifier.encode_batch(segment).squeeze()
         embeddings.append(embedding)
 
-        new_raw_wav = torch.cat((new_raw_wav, segment), dim=-1)
+        #new_raw_wav = torch.cat((new_raw_wav, segment), dim=-1)
         #zeros = torch.zeros(1, 3 * sr) # 3 sec silence between speech
         #new_raw_wav = torch.cat((new_raw_wav, zeros), dim=-1)
 
-    tmp = "/home/comp/Рабочий стол/AutoDub/output/tmp/tmp.wav"
-    ta.save(tmp, new_raw_wav, sample_rate=sr)
+    #tmp = "/home/comp/Рабочий стол/AutoDub/output/tmp/tmp.wav"
+    #ta.save(tmp, new_raw_wav, sample_rate=sr)
 
     
     embeddings = torch.stack(embeddings)
     return [audio_filepath, csv_filepath, embeddings]
-
-
-# def cluster_with_dbscan_def(embeddings, eps=310, min_samples=1):
-#     clustering = DBSCAN(eps=eps, min_samples=min_samples).fit(embeddings)
-#     labels = clustering.labels_
-#     return labels
-
-
-# def cluster_with_dbscan_cosine(embeddings, eps=0.5, min_samples=1):
-#     clustering = DBSCAN(metric='cosine', eps=eps, min_samples=min_samples).fit(embeddings)
-#     labels = clustering.labels_
-#     return labels
 
 
 def cluster_with_dbscan(embeddings, metric, eps, min_samples):
@@ -97,28 +85,28 @@ def label_speakers(audio_filepath, csv_filepath, output_dir, cluster_type, clust
 
 if __name__ == "__main__":
     cfg = {
-        "audio_filepath": "/home/comp/Рабочий стол/AutoDub/output/asr/test2_audio_mono_speech_resampled/test2_audio_mono_speech_resampled.wav",
-        "csv_filepath":  "/home/comp/Рабочий стол/AutoDub/output/asr/test2_audio_mono_speech_resampled/test2_audio_mono_speech_resampled_asr.csv",
-        "output_dir": "/home/comp/Рабочий стол/AutoDub/output/label",
-        # "cluster_type": "dbscan",
-        # "cluster_cfg": {
-        #     "metric": "cosine",
-        #     "eps": 0.8,
-        #     "min_samples": 1
-        # }
-        "cluster_type": "kmeans",
+        "audio_filepath": "/home/comp/Рабочий стол/ffmpeg/rm2/rm2_audio_1_rus.wav",
+        "csv_filepath":  "/home/comp/Рабочий стол/test_out/rm2_subs_3_rus_csv.csv",
+        "output_dir": "/home/comp/Рабочий стол/test_out/",
+        "cluster_type": "dbscan",
         "cluster_cfg": {
-            "n_clusters": 2    
+            "metric": "cosine",
+            "eps": 0.8,
+            "min_samples": 1
         }
+        # "cluster_type": "kmeans",
+        # "cluster_cfg": {
+        #     "n_clusters": 2    
+        # }
     }
 
 
     #print(cluster_with_dbscan_def(embs))
     #print(cluster_with_dbscan_cosine(embs))
     #print(cluster_with_kmeans(embs, 4))
-    #label_speakers(**cfg)
-    t2 = "/home/comp/Рабочий стол/AutoDub/output/asr/1_mono_speech_resampled/1_mono_speech_resampled_asr.csv"
-    t1 = "/home/comp/Рабочий стол/AutoDub/output/vad/1_mono_speech_resampled/1_mono_speech_resampled.wav"
+    label_speakers(**cfg)
+    # t2 = "/home/comp/Рабочий стол/AutoDub/output/asr/1_mono_speech_resampled/1_mono_speech_resampled_asr.csv"
+    # t1 = "/home/comp/Рабочий стол/AutoDub/output/vad/1_mono_speech_resampled/1_mono_speech_resampled.wav"
     #_, _ , embs = get_embeddings(t1, t2)
 
 

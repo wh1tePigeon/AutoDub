@@ -29,3 +29,4 @@ TTS
 pydub
 openai-whisper
 ffmpeg-python
+pysrt

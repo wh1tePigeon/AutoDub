@@ -9,6 +9,7 @@ import numpy as np
 from tqdm import tqdm
 import ffmpeg
 import json
+import pysrt
 
 
 def process_mkv_file(filepath, output_dir, languages, extract_srt=True, extract_video=False):
@@ -96,6 +97,7 @@ def process_mkv_dir(dirpath, output_dir, languages, extract_srt=True, extract_vi
                 files_metadata.append(meta)
 
     dir_meta["files"] = files_metadata
+    os.makedirs(output_dir, exist_ok=True)
     meta_savepath = os.path.join(output_dir, "data.json")
 
     with open(meta_savepath, 'w', encoding='utf-8') as f:
@@ -110,8 +112,24 @@ def srt_to_txt(filepath, output_dir):
     filename = filepath.split(".")[0].split("/")[-1]
     os.makedirs(output_dir, exist_ok=True)
 
-    
+    subs = pysrt.open(filepath)
+    data = []
+    for id, subtitle in enumerate(subs):
+        start_time = subtitle.start.hours * 3600 + subtitle.start.minutes * 60 + subtitle.start.seconds + subtitle.start.milliseconds / 1000
+        end_time = subtitle.end.hours * 3600 + subtitle.end.minutes * 60 + subtitle.end.seconds + subtitle.end.milliseconds / 1000
+        #text = subtitle.text
+        text = subtitle.text.replace('\n', ' ')
+        data.append({
+                'id': id,
+                'start': start_time,
+                'end': end_time,
+                'text': text
+            })
+    df = pd.DataFrame(data)
+    savepath = os.path.join(output_dir, (filename + "_csv.csv"))
+    df.to_csv(savepath, index=False, sep=";")
 
+    return savepath
 
 
 if __name__ == "__main__":
@@ -127,5 +145,12 @@ if __name__ == "__main__":
         "output_dir" : "/home/comp/Рабочий стол/ffmpeg"
     }
 
-    process_mkv_dir(**cfg2)
+    cfg3 = {
+        "filepath" : "/home/comp/Рабочий стол/test_inp/rm2_subs_3_rus.srt",
+        "output_dir" : "/home/comp/Рабочий стол/test_out/"
+    }
+
+    #process_mkv_dir(**cfg2)
     #process_mkv_file(**cfg)
+
+    srt_to_txt(**cfg3)
