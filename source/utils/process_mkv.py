@@ -104,6 +104,16 @@ def process_mkv_dir(dirpath, output_dir, languages, extract_srt=True, extract_vi
     return meta_savepath
 
 
+def srt_to_txt(filepath, output_dir):
+    assert os.path.exists(filepath)
+
+    filename = filepath.split(".")[0].split("/")[-1]
+    os.makedirs(output_dir, exist_ok=True)
+
+    
+
+
+
 if __name__ == "__main__":
     cfg = {
         "filepath" : "/home/comp/Рабочий стол/RaM/rm1.mkv",
@@ -112,7 +122,7 @@ if __name__ == "__main__":
     }
 
     cfg2 = {
-        "dirpath" : "/home/comp/Рабочий стол/test_ff",
+        "dirpath" : "/home/comp/Рабочий стол/Sherlock.S04.Hybrid.1080p",
         "languages": ["eng", "rus"],
         "output_dir" : "/home/comp/Рабочий стол/ffmpeg"
     }
