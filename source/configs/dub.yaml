@@ -1,7 +1,7 @@
-filepath: "$ROOT/input/test2.mp4"
+filepath: "/home/comp/Рабочий стол/RaM/segment_2.wav"
 
 separate_audio:
-  filepath:
+  filepath: 
   output_dir: "$ROOT/output/video_n_audio_separated"
 
 bsrnn:
@@ -14,7 +14,7 @@ bsrnn:
   window_type: "hann"
   chunk_size_second: 6.0
   hop_size_second: 0.5
-  batch_size: 6
+  batch_size: 4
 
 vad:
   sr: 16000
