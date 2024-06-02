@@ -103,7 +103,7 @@ def process_mkv_dir(dirpath, output_dir, languages, extract_srt=True, extract_vi
     with open(meta_savepath, 'w', encoding='utf-8') as f:
         json.dump(dir_meta, f, ensure_ascii=False, indent=4)
     
-    return meta_savepath
+    return meta_savepath, dir_meta
 
 
 def srt_to_txt(filepath, output_dir):
