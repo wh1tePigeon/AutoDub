@@ -56,7 +56,7 @@ def cut_n_save(filepath, output_dir, csv_filepath):
     directory_save_file_segments = os.path.join(directory_save_file, "segments")
     os.makedirs(directory_save_file_segments, exist_ok=True)
 
-    for i, row in tqdm(df.iterrows()):
+    for i, row in tqdm(df.iterrows(), total=len(df.index)):
         start = row["start"]
         end = row["end"]
         id = row["id"]
@@ -106,7 +106,7 @@ def align_audio_length(csv_filepath, output_dir, filename):
 
     df = pd.read_csv(csv_filepath, delimiter=';', encoding='utf-8')
 
-    for i, row in tqdm(df.iterrows()):
+    for i, row in tqdm(df.iterrows(), total=len(df.index)):
         start = row["start"]
         end = row["end"]
         audio_path = row["tts_path"]
@@ -145,7 +145,7 @@ def concat_segments(speech_path, background_path, csv_filepath, filename,
 
     df = pd.read_csv(csv_filepath, delimiter=';', encoding='utf-8')
 
-    for _, row in tqdm(df.iterrows()):
+    for _, row in tqdm(df.iterrows(), total=len(df.index)):
         start = row["start"]
         end = row["end"]
         segment_path = row["aligned_tts"]
@@ -209,7 +209,7 @@ def cut_n_save_by_label(filepath, output_dir, csv_filepath, save_segments=True, 
     common_by_label = {}
     common_by_label_savepath = {}
 
-    for i, row in tqdm(df.iterrows()):
+    for i, row in tqdm(df.iterrows(), total=len(df.index)):
         start = row["start"]
         end = row["end"]
         id = row["id"]

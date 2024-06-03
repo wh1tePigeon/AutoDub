@@ -16,6 +16,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 from source.utils.process_mkv import process_mkv_dir, srt_to_txt
 from source.utils.process_audio import cut_n_save
 
+from speechbrain.inference.speaker import EncoderClassifier
+import pandas as pd
+from sklearn.cluster import DBSCAN, KMeans
+from sklearn.preprocessing import StandardScaler
+
 
 # def extract_speech_track(metafilepath, output_dir):
 #     assert os.path.exists(metafilepath)
@@ -117,10 +122,48 @@ def process_data_dir(metafilepath, output_dir):
     return meta_savepath
 
 
+def compute_embeddings(metafilepath):
+    assert os.path.exists(metafilepath)
+
+    with open(metafilepath, 'r', encoding='utf-8') as file:
+        metadata = json.load(file)
+
+    classifier = EncoderClassifier.from_hparams(source="speechbrain/spkrec-ecapa-voxceleb")
+
+    for i, file in enumerate(metadata["files"]):
+        for language in file["languages"]:
+            tmp = file["languages"][language]
+            if "csv_w_segments" in tmp:
+                csv_segments_filepath = tmp["csv_w_segments"]
+
+                output_dir = os.path.join(os.path.dirname(csv_segments_filepath), "embds")
+                os.makedirs(output_dir, exist_ok=True)
+
+                df = pd.read_csv(csv_segments_filepath, delimiter=';', encoding='utf-8')
+
+                for i, row in tqdm(df.iterrows(), total=len(df.index)):
+                    segment_path = row["path"]
+                    if os.path.exists(segment_path):
+                        segment, sr = ta.load(segment_path)
+                        embedding = classifier.encode_batch(segment).squeeze().cpu().numpy()
+
+                        filename = segment_path.split(".")[0].split("/")[-1]
+                        savepath = os.path.join(output_dir, (filename + "_embd"))
+                        np.save(savepath, embedding, allow_pickle=False)
+
+                        df.at[i, "embd_path"] = savepath
+
+                df.to_csv(csv_segments_filepath, sep=';', index=False, encoding='utf-8')
+              
+    return metafilepath
+
+
 if __name__ == "__main__":
     cfg = {
         "metafilepath" : "/home/comp/Рабочий стол/AutoDub/output/ffmpeg/data.json",
         "output_dir" : "/home/comp/Рабочий стол/AutoDub/output/dataset"
     }
 
-    process_data_dir(**cfg)
+    compute_embeddings("/home/comp/Рабочий стол/AutoDub/output/dataset/data.json")
+
+    #process_data_dir(**cfg)
