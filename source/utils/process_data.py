@@ -176,10 +176,15 @@ def label_embds(metafilepath):
                         #embd = embd / embd.norm()
                         embds.append(embd)
 
-                #embds = torch.stack(embds)
+                embds = torch.stack(embds)
                 #clustering = DBSCAN(metric="cosine", eps=0.4, min_samples=10).fit(embds)
                 #labels = clustering.labels_
-                labels = DBSCANCosine(eps=0.7, min_samples=15).fit(embds)
+                #labels = DBSCANCosine(eps=0.7, min_samples=15).fit(embds)
+                scaler = StandardScaler()
+                scaled_embeddings = scaler.fit_transform(embds)
+
+                kmeans = KMeans(n_clusters=16, random_state=0).fit(scaled_embeddings)
+                labels = kmeans.labels_
 
                 df = df.assign(label=labels)
                 df.to_csv(csv_segments_filepath, sep=';', index=False, encoding='utf-8')
@@ -224,6 +229,6 @@ if __name__ == "__main__":
     }
 
     #compute_embeddings("/home/comp/Рабочий стол/AutoDub/output/dataset/data.json")
-    #label_embds("/home/comp/Рабочий стол/AutoDub/output/dataset/data.json")
-    group_by_label("/home/comp/Рабочий стол/AutoDub/output/dataset/data.json")
+    label_embds("/home/comp/Рабочий стол/AutoDub/output/dataset/data.json")
+    #group_by_label("/home/comp/Рабочий стол/AutoDub/output/dataset/data.json")
     #process_data_dir(**cfg)
