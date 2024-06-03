@@ -16,20 +16,37 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 from source.utils.process_mkv import process_mkv_dir, srt_to_txt
 
 
-def extract_speech_track(filepath, output_dir):
-    assert os.path.exists(filepath)
+def extract_speech_track(metafilepath, output_dir):
+    assert os.path.exists(metafilepath)
 
     os.makedirs(output_dir, exist_ok=True)
-    audio, sr = ta.load(filepath)
 
-    if audio.shape[-1] == 6:
-        # in wav files third channel is central sound
-        speech = audio[2]
+    with open(metafilepath, 'r', encoding='utf-8') as file:
+        metadata = json.load(file)
 
-    filename = filepath.split(".")[0].split("/")[-1]
-    savepath = os.path.join(output_dir, (filename + "_speech.wav"))
-    ta.save(savepath, speech, sample_rate=sr)
-    return savepath
+    for i, file in enumerate(metadata["files"]):
+        for language in file["languages"]:
+            tmp = file["languages"][language]
+            if len(tmp["audio_paths"]) >= 1 and len(tmp["subs_paths"]) >= 1:
+                audio_path = tmp["audio_paths"][0]
+                
+                if os.path.exists(audio_path):
+                    audio, sr = ta.load(audio_path)
+
+                    if audio.shape[0] == 6:
+                        # in wav files third channel is central sound
+                        speech = audio[2].unsqueeze(0)
+
+                        filename = audio_path.split(".")[0].split("/")[-1]
+                        savepath = os.path.join(output_dir, (filename + "_speech.wav"))
+                        ta.save(savepath, speech, sample_rate=sr)
+                        metadata["files"][i]["languages"][language]["speech_path"] = savepath
+
+    meta_savepath = os.path.join(output_dir, "data.json")
+    with open(meta_savepath, 'w', encoding='utf-8') as f:
+        json.dump(metadata, f, ensure_ascii=False, indent=4)
+
+    return meta_savepath
 
 
 def process_data_dir(cfg):
@@ -56,3 +73,10 @@ def process_data_dir(cfg):
                 #data = 
 
 
+if __name__ == "__main__":
+    cfg = {
+        "metafilepath" : "/home/comp/Рабочий стол/ffmpeg/data.json",
+        "output_dir" : "/home/comp/Рабочий стол/AutoDub/output/dataset/speech"
+    }
+
+    extract_speech_track(**cfg)

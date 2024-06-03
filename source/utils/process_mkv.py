@@ -150,7 +150,7 @@ if __name__ == "__main__":
         "output_dir" : "/home/comp/Рабочий стол/test_out/"
     }
 
-    #process_mkv_dir(**cfg2)
+    process_mkv_dir(**cfg2)
     #process_mkv_file(**cfg)
 
-    srt_to_txt(**cfg3)
+    #srt_to_txt(**cfg3)
