@@ -140,9 +140,9 @@ if __name__ == "__main__":
     }
 
     cfg2 = {
-        "dirpath" : "/home/comp/Рабочий стол/Sherlock.S04.Hybrid.1080p",
+        "dirpath" : "/home/comp/Рабочий стол/Sherlock",
         "languages": ["eng", "rus"],
-        "output_dir" : "/home/comp/Рабочий стол/ffmpeg"
+        "output_dir" : "/home/comp/Рабочий стол/AutoDub/output/ffmpeg"
     }
 
     cfg3 = {
