@@ -9,6 +9,7 @@ import numpy as np
 from tqdm import tqdm
 import ffmpeg
 import json
+import shutil
 import pysrt
 import sys
 from pathlib import Path
@@ -21,57 +22,8 @@ import pandas as pd
 from sklearn.cluster import DBSCAN, KMeans
 from sklearn.preprocessing import StandardScaler
 
-
-# def extract_speech_track(metafilepath, output_dir):
-#     assert os.path.exists(metafilepath)
-
-#     os.makedirs(output_dir, exist_ok=True)
-
-#     with open(metafilepath, 'r', encoding='utf-8') as file:
-#         metadata = json.load(file)
-
-#     for i, file in enumerate(metadata["files"]):
-#         for language in file["languages"]:
-#             tmp = file["languages"][language]
-#             if len(tmp["audio_paths"]) >= 1 and len(tmp["subs_paths"]) >= 1:
-#                 audio_path = tmp["audio_paths"][0]
-                
-#                 if os.path.exists(audio_path):
-#                     audio, sr = ta.load(audio_path)
-
-#                     if audio.shape[0] == 6:
-#                         # in wav files third channel is central sound
-#                         speech = audio[2].unsqueeze(0)
-
-#                         filename = audio_path.split(".")[0].split("/")[-1] + "_speech.wav"
-#                         savepath = os.path.join(output_dir, filename)
-#                         print("Saving " + filename)
-#                         ta.save(savepath, speech, sample_rate=sr)
-#                         metadata["files"][i]["languages"][language]["speech_path"] = savepath
-
-#     meta_savepath = os.path.join(output_dir, "data.json")
-#     with open(meta_savepath, 'w', encoding='utf-8') as f:
-#         json.dump(metadata, f, ensure_ascii=False, indent=4)
-
-#     return meta_savepath
-
-
-# def extract_speech_segments(metafilepath, output_dir):
-#     assert os.path.exists(metafilepath)
-
-#     os.makedirs(output_dir, exist_ok=True)
-
-#     with open(metafilepath, 'r', encoding='utf-8') as file:
-#         metadata = json.load(file)
-
-#     for i, file in enumerate(metadata["files"]):
-#         for language in file["languages"]:
-#             tmp = file["languages"][language]
-#             if len(tmp["audio_paths"]) >= 1 and len(tmp["subs_paths"]) >= 1:
-#                 return 0
-
-
-
+from scipy.spatial.distance import cdist
+import numpy as np
 
 
 def process_data_dir(metafilepath, output_dir):
@@ -141,6 +93,7 @@ def compute_embeddings(metafilepath):
 
                 df = pd.read_csv(csv_segments_filepath, delimiter=';', encoding='utf-8')
 
+                print("Computing embds for " + tmp["speech_path"].split(".")[0].split("/")[-1])
                 for i, row in tqdm(df.iterrows(), total=len(df.index)):
                     segment_path = row["path"]
                     if os.path.exists(segment_path):
@@ -148,7 +101,7 @@ def compute_embeddings(metafilepath):
                         embedding = classifier.encode_batch(segment).squeeze().cpu().numpy()
 
                         filename = segment_path.split(".")[0].split("/")[-1]
-                        savepath = os.path.join(output_dir, (filename + "_embd"))
+                        savepath = os.path.join(output_dir, (filename + "_embd.npy"))
                         np.save(savepath, embedding, allow_pickle=False)
 
                         df.at[i, "embd_path"] = savepath
@@ -158,12 +111,119 @@ def compute_embeddings(metafilepath):
     return metafilepath
 
 
+def cosine_distance(X1, X2):
+    return cdist(X1, X2, 'cosine')[0][0]
+
+
+class DBSCANCosine:
+    def __init__(self, eps=0.6, min_samples=5):
+        self.eps = eps
+        self.min_samples = min_samples
+    
+    def fit(self, X):
+        n_points = len(X)
+        labels = np.zeros(n_points, dtype=np.int32)
+        cluster_id = 0
+        
+        for point_index in range(n_points):
+            if labels[point_index]!= 0:
+                continue
+            
+            neighbors = []
+            for neighbor_index in range(n_points):
+                if point_index == neighbor_index:
+                    continue
+                
+                distance = cosine_distance(X[point_index].reshape(1, -1), X[neighbor_index].reshape(1, -1))
+                
+                if distance > self.eps:
+                    neighbors.append(neighbor_index)
+            
+            if len(neighbors) >= self.min_samples:
+                labels[neighbors] = cluster_id
+                cluster_id += 1
+
+                # for neighbor_index in neighbors:
+                #     if labels[neighbor_index] == 0:
+                #         new_neighbors = [n for n in neighbors if cosine_distance(X[neighbor_index].reshape(1, -1), X[n].reshape(1, -1)) > self.eps]
+                #         if len(new_neighbors) >= self.min_samples:
+                #             labels[new_neighbors] = cluster_id
+                #             cluster_id += 1
+        return labels
+                            
+
+
+def label_embds(metafilepath):
+    assert os.path.exists(metafilepath)
+
+    with open(metafilepath, 'r', encoding='utf-8') as file:
+        metadata = json.load(file)
+
+    for i, file in enumerate(metadata["files"]):
+        for language in file["languages"]:
+            tmp = file["languages"][language]
+            if "csv_w_segments" in tmp:
+                csv_segments_filepath = tmp["csv_w_segments"]
+
+                df = pd.read_csv(csv_segments_filepath, delimiter=';', encoding='utf-8')
+
+                print("Labeling embds for " + tmp["speech_path"].split(".")[0].split("/")[-1])
+                embds = []
+                for i, row in tqdm(df.iterrows(), total=len(df.index)):
+                    embd_path = row["embd_path"]
+                    if os.path.exists(embd_path):
+                        embd = torch.from_numpy(np.load(embd_path))
+                        #embd = embd / embd.norm()
+                        embds.append(embd)
+
+                #embds = torch.stack(embds)
+                #clustering = DBSCAN(metric="cosine", eps=0.4, min_samples=10).fit(embds)
+                #labels = clustering.labels_
+                labels = DBSCANCosine(eps=0.7, min_samples=15).fit(embds)
+
+                df = df.assign(label=labels)
+                df.to_csv(csv_segments_filepath, sep=';', index=False, encoding='utf-8')
+              
+    return metafilepath
+
+
+def group_by_label(metafilepath):
+    assert os.path.exists(metafilepath)
+
+    with open(metafilepath, 'r', encoding='utf-8') as file:
+        metadata = json.load(file)
+
+    for i, file in enumerate(metadata["files"]):
+        for language in file["languages"]:
+            tmp = file["languages"][language]
+            if "csv_w_segments" in tmp:
+                csv_segments_filepath = tmp["csv_w_segments"]
+
+                output_dir = os.path.join(os.path.dirname(csv_segments_filepath), "labels")
+
+                df = pd.read_csv(csv_segments_filepath, delimiter=';', encoding='utf-8')
+
+                print("Grouping segments by label for " + tmp["speech_path"].split(".")[0].split("/")[-1])
+                for i, row in tqdm(df.iterrows(), total=len(df.index)):
+                    label = row["label"]
+                    segment_path = row["path"]
+                    label_savedir = os.path.join(output_dir, str(label))
+                    os.makedirs(label_savedir, exist_ok=True)
+                    file_savepath = os.path.join(label_savedir, segment_path.split("/")[-1])
+                    shutil.copy2(segment_path, file_savepath)
+
+              
+    return metafilepath
+
+
+
 if __name__ == "__main__":
     cfg = {
         "metafilepath" : "/home/comp/Рабочий стол/AutoDub/output/ffmpeg/data.json",
         "output_dir" : "/home/comp/Рабочий стол/AutoDub/output/dataset"
     }
 
-    compute_embeddings("/home/comp/Рабочий стол/AutoDub/output/dataset/data.json")
-
+    #compute_embeddings("/home/comp/Рабочий стол/AutoDub/output/dataset/data.json")
+    #label_embds("/home/comp/Рабочий стол/AutoDub/output/dataset/data.json")
+    group_by_label("/home/comp/Рабочий стол/AutoDub/output/dataset/data.json")
     #process_data_dir(**cfg)
