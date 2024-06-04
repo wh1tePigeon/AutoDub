@@ -106,7 +106,7 @@ def process_mkv_dir(dirpath, output_dir, languages, extract_srt=True, extract_vi
     return meta_savepath, dir_meta
 
 
-def srt_to_txt(filepath, output_dir):
+def srt_to_csv(filepath, output_dir):
     assert os.path.exists(filepath)
 
     filename = filepath.split(".")[0].split("/")[-1]

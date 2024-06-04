@@ -14,7 +14,7 @@ import pysrt
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
-from source.utils.process_mkv import process_mkv_dir, srt_to_txt
+from source.utils.process_mkv import process_mkv_dir, srt_to_csv
 from source.utils.process_audio import cut_n_save
 
 from speechbrain.inference.speaker import EncoderClassifier
@@ -61,7 +61,7 @@ def process_data_dir(metafilepath, output_dir):
 
                         subs_path = tmp["subs_paths"][0]
                         if os.path.exists(subs_path):
-                            csv_subs_path = srt_to_txt(subs_path, savepath)
+                            csv_subs_path = srt_to_csv(subs_path, savepath)
                             _, new_csv_subs_path = cut_n_save(savepath_speech, savepath, csv_subs_path)
                             metadata["files"][i]["languages"][language]["csv_w_segments"] = new_csv_subs_path
 
@@ -192,6 +192,82 @@ def label_embds(metafilepath):
     return metafilepath
 
 
+def merge_sim_segments(metafilepath):
+    assert os.path.exists(metafilepath)
+
+    with open(metafilepath, 'r', encoding='utf-8') as file:
+        metadata = json.load(file)
+
+    for i, file in enumerate(metadata["files"]):
+        for language in file["languages"]:
+            tmp = file["languages"][language]
+            if "csv_w_segments" in tmp:
+                csv_segments_filepath = tmp["csv_w_segments"]
+
+                df = pd.read_csv(csv_segments_filepath, delimiter=';', encoding='utf-8')
+
+                print("Merging similar segments for " + tmp["speech_path"].split(".")[0].split("/")[-1])
+                embds = []
+                for i, row in tqdm(df.iterrows(), total=len(df.index)):
+                    embd_path = row["embd_path"]
+                    if os.path.exists(embd_path):
+                        embd = torch.from_numpy(np.load(embd_path))
+                        embd = embd / embd.norm()
+                        embds.append(embd)
+
+                sims = []
+                similarity = torch.nn.CosineSimilarity(dim=-1, eps=1e-6)
+                for i in range(0, len(embds) - 1):
+                    s = similarity(embds[i], embds[i + 1]).item()
+                    print(s)
+                    sims.append(s)
+                
+                print("1")
+
+
+                #embds = torch.stack(embds)
+                #clustering = DBSCAN(metric="cosine", eps=0.4, min_samples=10).fit(embds)
+                #labels = clustering.labels_
+                #labels = DBSCANCosine(eps=0.7, min_samples=15).fit(embds)
+                # scaler = StandardScaler()
+                # scaled_embeddings = scaler.fit_transform(embds)
+
+                # kmeans = KMeans(n_clusters=16, random_state=0).fit(scaled_embeddings)
+                # labels = kmeans.labels_
+
+                # df = df.assign(label=labels)
+                # df.to_csv(csv_segments_filepath, sep=';', index=False, encoding='utf-8')
+              
+    return metafilepath
+
+
+def remove_dialogues_n_small_segments(csv_filepath, output_dir=None):
+    assert os.path.exists(csv_filepath)
+
+    if output_dir is None:
+        output_dir = os.path.dirname(csv_filepath)
+
+    os.makedirs(output_dir, exist_ok=True)
+    df = pd.read_csv(csv_filepath, delimiter=';', encoding='utf-8')
+
+    for i, row in tqdm(df.iterrows(), total=len(df.index)):
+        text = row["text"]
+        if text[0] == "-":
+            df = df.drop(i)
+        
+        start = row["start"]
+        end = row["end"]
+        duration = end - start
+        if duration < 0.5:
+            df = df.drop(i)
+    
+    csvname = csv_filepath.split(".")[0].split("/")[-1]
+    savepath = os.path.join(output_dir, (csvname + "_clean.csv"))
+    df.to_csv(savepath, sep=';', index=False, encoding='utf-8')
+
+    return savepath
+
+
 def group_by_label(metafilepath):
     assert os.path.exists(metafilepath)
 
@@ -227,8 +303,11 @@ if __name__ == "__main__":
         "metafilepath" : "/home/comp/Рабочий стол/AutoDub/output/ffmpeg/data.json",
         "output_dir" : "/home/comp/Рабочий стол/AutoDub/output/dataset"
     }
-
-    #compute_embeddings("/home/comp/Рабочий стол/AutoDub/output/dataset/data.json")
-    label_embds("/home/comp/Рабочий стол/AutoDub/output/dataset/data.json")
-    #group_by_label("/home/comp/Рабочий стол/AutoDub/output/dataset/data.json")
+    meta_path = "/home/comp/Рабочий стол/AutoDub/output/dataset/data.json"
+    csv_path = "/home/comp/Рабочий стол/AutoDub/output/dataset/sherlock-1/eng/sherlock-1_audio_2_eng_speech/test.csv"
+    #merge_sim_segments(meta_path)
+    remove_dialogues_n_small_segments(csv_path)
+    #compute_embeddings(meta_path)
+    #label_embds(meta_path)
+    #group_by_label(meta_path)
     #process_data_dir(**cfg)
