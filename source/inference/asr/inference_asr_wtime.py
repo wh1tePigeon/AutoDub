@@ -57,7 +57,7 @@ if __name__ == "__main__":
             "type": "whisper",
             "model": "small.en",
             "sr": 16000,
-            "filepath": "/home/comp/Рабочий стол/AutoDub/output/vad/1_mono_speech_resampled/1_mono_speech_resampled.wav",
+            "filepath": "/home/comp/Рабочий стол/AutoDub/output/dataset/sherlock-1/eng/sherlock-1_audio_2_eng_speech/test/sherlock_test.wav",
             "boundaries": "/home/comp/Рабочий стол/AutoDub/output/vad/1_mono_speech_resampled/1_mono_speech_resampled_boundaries.txt",
             "output_dir": "/home/comp/Рабочий стол/AutoDub/output/asr2",
             "checkpoint_path": "/home/comp/Рабочий стол/AutoDub/checkpoints/asr/whisper"

@@ -63,7 +63,8 @@ def process_data_dir(metafilepath, output_dir):
                         subs_path = tmp["subs_paths"][0]
                         if os.path.exists(subs_path):
                             csv_subs_path = srt_to_csv(subs_path, savepath)
-                            _, new_csv_subs_path = cut_n_save(savepath_speech, savepath, csv_subs_path)
+                            clean_csv_subs_path = remove_dialogues_n_small_segments(csv_subs_path)
+                            _, new_csv_subs_path = cut_n_save(savepath_speech, savepath, clean_csv_subs_path)
                             metadata["files"][i]["languages"][language]["csv_w_segments"] = new_csv_subs_path
 
 
@@ -114,6 +115,36 @@ def compute_embeddings(metafilepath):
                 df.to_csv(csv_segments_filepath, sep=';', index=False, encoding='utf-8')
               
     return metafilepath
+
+
+def compute_average_embd(dirpath, output_dir=None):
+    assert os.path.exists(dirpath)
+
+    if output_dir is None:
+        output_dir = dirpath
+
+    os.makedirs(output_dir, exist_ok=True)
+
+    classifier = EncoderClassifier.from_hparams(source="speechbrain/spkrec-ecapa-voxceleb")
+    embds = []
+
+    for filename in tqdm(os.listdir(dirpath), total=len(os.listdir(dirpath))):
+        if filename.endswith(".wav"):
+            filepath = os.path.join(dirpath, filename)
+            try:
+                audio, sr = ta.load(filepath)
+                embedding = classifier.encode_batch(audio).squeeze().cpu()
+                embedding = embedding / embedding.norm()
+                embds.append(embedding)
+            except:
+                pass
+    
+    average = torch.stack(embds).mean(dim=0).numpy()
+    filename = dirpath.split(".")[0].split("/")[-1]
+    savepath = os.path.join(output_dir, (filename + "_average_embd.npy"))
+    np.save(savepath, average, allow_pickle=False)
+
+    return savepath
 
 
 def cosine_distance(X1, X2):
@@ -178,8 +209,18 @@ def label_embds(metafilepath):
                     embd_path = row["embd_path"]
                     if os.path.exists(embd_path):
                         embd = torch.from_numpy(np.load(embd_path))
-                        #embd = embd / embd.norm()
+                        embd = embd / embd.norm()
                         embds.append(embd)
+
+                av = torch.from_numpy(np.load("/home/comp/Рабочий стол/bk/bk_average_embd.npy"))
+                av = av / av.norm()
+                sims = []
+                similarity = torch.nn.CosineSimilarity(dim=-1, eps=1e-6)
+                for i in range(0, len(embds)):
+                    s = similarity(embds[i], av).item()
+                    if s >= 0.82:
+                        print(i)
+                        sims.append(i)
 
                 embds = torch.stack(embds)
                 #clustering = DBSCAN(metric="cosine", eps=0.4, min_samples=10).fit(embds)
@@ -255,20 +296,51 @@ def remove_dialogues_n_small_segments(csv_filepath, output_dir=None):
     os.makedirs(output_dir, exist_ok=True)
     df = pd.read_csv(csv_filepath, delimiter=';', encoding='utf-8')
 
-    for i, row in tqdm(df.iterrows(), total=len(df.index)):
+    new_lines = []
+    tmp = {
+        "start" : None,
+        "end" : None,
+        "text" : None
+    }
+
+    for i, row in tqdm(df.iterrows(), total=len(df), desc="Merging segments to sentences"):
+        text = row["text"]
+        if tmp["text"] is None:
+            tmp["text"] = text
+            tmp["start"] = row["start"]
+            tmp["end"] = row["end"]
+
+        else: 
+            if not tmp["text"].endswith((".", "!", "?")) and text[0].islower():
+                tmp["text"] = tmp["text"] + " " + text
+                tmp["end"] = row["end"]
+            else:
+                new_lines.append(tmp)
+                tmp = {
+                    "start" : None,
+                    "end" : None,
+                    "text" : None
+                }
+
+    new_df = pd.DataFrame(new_lines)
+
+    for i, row in tqdm(new_df.iterrows(), total=len(new_df.index), desc="Removing dialogues"):
         text = row["text"]
         if text[0] == "-":
-            df = df.drop(i)
-        
+            new_df = new_df.drop(i)
+
+                
+    for i, row in tqdm(new_df.iterrows(), total=len(new_df.index), desc="Deleting short segments"):
         start = row["start"]
         end = row["end"]
         duration = end - start
         if duration < 0.5:
-            df = df.drop(i)
+            new_df = new_df.drop(i)
+        
     
     csvname = csv_filepath.split(".")[0].split("/")[-1]
     savepath = os.path.join(output_dir, (csvname + "_clean.csv"))
-    df.to_csv(savepath, sep=';', index=False, encoding='utf-8')
+    new_df.to_csv(savepath, sep=';', index=False, encoding='utf-8')
 
     return savepath
 
@@ -338,26 +410,51 @@ def denoise_w_bsrnn(dirpath, cfg, output_dir=None):
                 audio = audio.to(device)
 
                 with torch.inference_mode():
-                    audio = audio.unsqueeze(0)
+                    
                     def forward(audio):
                         _, output = model({"audio": {"mixture": audio},})
                         return output["audio"]
                     
-                    if audio.shape[-1] / sr > 12:
-                        fader = OverlapAddFader(window_type=cfg["window_type"],
-                                                chunk_size_second=cfg["chunk_size_second"],
-                                                hop_size_second=cfg["hop_size_second"],
-                                                fs=sr,
-                                                batch_size=cfg["batch_size"])
+                    if audio.shape[-1] / sr > 5:
+                        speech_segments = []
+                        segment_len = sr * 5
+                        amount_of_segments = audio.shape[-1] // segment_len
+                        for i in tqdm(range(amount_of_segments), total=amount_of_segments):
+                            start = i * segment_len
+                            segment = audio[..., start : start + segment_len]
+                            segmet = segment.unsqueeze(0)
+                            output = forward(segmet)
+                            speech = output["speech"]
+                            speech = speech.reshape(1, -1)
+                            speech = speech.to("cpu")
+                            speech_segments.append(speech)
                         
-                        output = fader(audio, lambda a: forward(a))
+                        final_segment_l = audio.shape[-1] - amount_of_segments * segment_len
+                        if final_segment_l > 0:
+                            segment = audio[..., -final_segment_l:]
+                            segmet = segment.unsqueeze(0)
+                            output = forward(segmet)
+                            speech = output["speech"]
+                            speech = speech.reshape(1, -1)
+                            speech = speech.to("cpu")
+                            speech_segments.append(speech)
+                        
+                        speech = torch.cat(speech_segments, dim=-1)
+                        # fader = OverlapAddFader(window_type=cfg["window_type"],
+                        #                         chunk_size_second=cfg["chunk_size_second"],
+                        #                         hop_size_second=cfg["hop_size_second"],
+                        #                         fs=sr,
+                        #                         batch_size=cfg["batch_size"])
+                        
+                        # output = fader(audio, lambda a: forward(a))
                         
                     else:
+                        audio = audio.unsqueeze(0)
                         output = forward(audio)
                     
-                    speech = output["speech"]
-                    speech = speech.reshape(1, -1)
-                    speech = speech.to("cpu")
+                        speech = output["speech"]
+                        speech = speech.reshape(1, -1)
+                        speech = speech.to("cpu")
 
                     savepath = os.path.join(output_dir, filename)
                     ta.save(savepath, speech, sr)
@@ -380,7 +477,7 @@ if __name__ == "__main__":
     #merge_sim_segments(meta_path)
     #remove_dialogues_n_small_segments(csv_path)
     #compute_embeddings(meta_path)
-    #label_embds(meta_path)
+    label_embds(meta_path)
     #group_by_label(meta_path)
     #process_data_dir(**cfg)
 
@@ -395,6 +492,9 @@ if __name__ == "__main__":
         "batch_size": 4
     }
 
-    dirpath = "/home/comp/Рабочий стол/AutoDub/output/dataset/sherlock-1/eng/test"
-    output_dir = "/home/comp/Рабочий стол/AutoDub/output/dataset/sherlock-1/eng/test2"
-    denoise_w_bsrnn(dirpath, config_dict, output_dir)
+    dirpath = "/home/comp/Рабочий стол/AutoDub/output/dataset/sherlock-1/eng/sherlock-1_audio_2_eng_speech/segments"
+    dirpath2 = "/home/comp/Рабочий стол/AutoDub/output/dataset/sherlock-1/eng/sherlock-1_audio_2_eng_speech/test"
+    #output_dir = "/home/comp/Рабочий стол/AutoDub/output/dataset/sherlock-1/eng/test2"
+    #denoise_w_bsrnn(dirpath2, config_dict)#, output_dir)
+    #compute_average_embd("/home/comp/Рабочий стол/bk")
+    

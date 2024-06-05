@@ -59,13 +59,12 @@ def cut_n_save(filepath, output_dir, csv_filepath):
     for i, row in tqdm(df.iterrows(), total=len(df.index)):
         start = row["start"]
         end = row["end"]
-        id = row["id"]
 
         start = max(int(start * sr), 0)
         end = min(int(end * sr), audio.shape[-1])
         audio_segment = audio[..., start:end]
 
-        save_segment_name = filename + '_' + str(id) + ".wav"
+        save_segment_name = filename + '_' + str(i) + ".wav"
         save_segment_path = os.path.join(directory_save_file_segments, save_segment_name)
 
         ta.save(save_segment_path, audio_segment, sample_rate=sr)
