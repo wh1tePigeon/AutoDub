@@ -309,12 +309,13 @@ def denoise_w_bsrnn(dirpath, cfg, output_dir=None):
 
     os.makedirs(output_dir, exist_ok=True)
 
-    device, device_ids = prepare_device(cfg["n_gpu"])
+    #device, device_ids = prepare_device(cfg["n_gpu"])
+    device = "cuda" if torch.cuda.is_available() else "cpu"
     arch = OmegaConf.load(cfg["model"])
     model = instantiate(arch)
     model = model.to(device)
-    if len(device_ids) > 1:
-        model = torch.nn.DataParallel(model, device_ids=device_ids)
+    # if len(device_ids) > 1:
+    #     model = torch.nn.DataParallel(model, device_ids=device_ids)
 
     checkpoint = torch.load(cfg["checkpoint_path"], map_location=device)
     state_dict = checkpoint["state_dict"]
@@ -337,6 +338,7 @@ def denoise_w_bsrnn(dirpath, cfg, output_dir=None):
                 audio = audio.to(device)
 
                 with torch.inference_mode():
+                    audio = audio.unsqueeze(0)
                     def forward(audio):
                         _, output = model({"audio": {"mixture": audio},})
                         return output["audio"]
@@ -351,7 +353,6 @@ def denoise_w_bsrnn(dirpath, cfg, output_dir=None):
                         output = fader(audio, lambda a: forward(a))
                         
                     else:
-                        audio = audio.unsqueeze(0)
                         output = forward(audio)
                     
                     speech = output["speech"]
@@ -376,7 +377,7 @@ if __name__ == "__main__":
     }
     meta_path = "/home/comp/Рабочий стол/AutoDub/output/dataset/data.json"
     csv_path = "/home/comp/Рабочий стол/AutoDub/output/dataset/sherlock-1/eng/sherlock-1_audio_2_eng_speech/test.csv"
-    merge_sim_segments(meta_path)
+    #merge_sim_segments(meta_path)
     #remove_dialogues_n_small_segments(csv_path)
     #compute_embeddings(meta_path)
     #label_embds(meta_path)
@@ -394,6 +395,6 @@ if __name__ == "__main__":
         "batch_size": 4
     }
 
-    dirpath = "/home/comp/Рабочий стол/AutoDub/output/dataset/sherlock-1/eng/sherlock-1_audio_2_eng_speech/test"
-    output_dir = "/home/comp/Рабочий стол/AutoDub/output/dataset/sherlock-1/eng/sherlock-1_audio_2_eng_speech/test2"
-    #denoise_w_bsrnn(dirpath, config_dict)#, output_dir)
+    dirpath = "/home/comp/Рабочий стол/AutoDub/output/dataset/sherlock-1/eng/test"
+    output_dir = "/home/comp/Рабочий стол/AutoDub/output/dataset/sherlock-1/eng/test2"
+    denoise_w_bsrnn(dirpath, config_dict, output_dir)
