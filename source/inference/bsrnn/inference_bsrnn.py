@@ -9,6 +9,8 @@ from source.utils.util import prepare_device
 from source.utils.process_audio import load_n_process_audio
 from source.utils.fader import OverlapAddFader
 from omegaconf import OmegaConf
+import tqdm
+
 
 def inference_bsrnn(cfg):
     device, device_ids = prepare_device(cfg["n_gpu"])
@@ -39,20 +41,56 @@ def inference_bsrnn(cfg):
                 _, output = model({"audio": {"mixture": audio},})
                 return output["audio"]
             
-            if audio.shape[-1] / sr > 12:
-                fader = OverlapAddFader(window_type=cfg["window_type"],
-                                        chunk_size_second=cfg["chunk_size_second"],
-                                        hop_size_second=cfg["hop_size_second"],
-                                        fs=sr,
-                                        batch_size=cfg["batch_size"])
+            if audio.shape[-1] / sr > cfg["max_len"]:
+                if cfg["use_fader"]:
+                    audio = audio.unsqueeze(0)
+                    fader = OverlapAddFader(window_type=cfg["window_type"],
+                                            chunk_size_second=cfg["chunk_size_second"],
+                                            hop_size_second=cfg["hop_size_second"],
+                                            fs=sr,
+                                            batch_size=cfg["batch_size"])
+                    
+                    output = fader(audio, lambda a: forward(a))
+
+                    speech = output["speech"]
+                    speech = speech.reshape(1, -1)
+                    speech = speech.to("cpu")
+
                 
-                output = fader(audio,
-                                lambda a: forward(a))
+                else:
+                    speech_segments = []
+                    segment_len = sr * cfg["max_len"]
+                    amount_of_segments = audio.shape[-1] // segment_len
+                    for i in tqdm(range(amount_of_segments), total=amount_of_segments):
+                        start = i * segment_len
+                        segment = audio[..., start : start + segment_len]
+                        segmet = segment.unsqueeze(0)
+                        output = forward(segmet)
+                        speech = output["speech"]
+                        speech = speech.reshape(1, -1)
+                        speech = speech.to("cpu")
+                        speech_segments.append(speech)
+                    
+                    final_segment_l = audio.shape[-1] - amount_of_segments * segment_len
+                    if final_segment_l > 0:
+                        segment = audio[..., -final_segment_l:]
+                        segmet = segment.unsqueeze(0)
+                        output = forward(segmet)
+                        speech = output["speech"]
+                        speech = speech.reshape(1, -1)
+                        speech = speech.to("cpu")
+                        speech_segments.append(speech)
+                    
+                    speech = torch.cat(speech_segments, dim=-1)
                 
             else:
+                audio = audio.unsqueeze(0)
                 output = forward(audio)
             
-            speech = output["audio"]["speech"]
+                speech = output["speech"]
+                speech = speech.reshape(1, -1)
+                speech = speech.to("cpu")
+            
             speech = speech.reshape(1, -1)
             audio = audio.reshape(1, -1)
             background = audio - speech

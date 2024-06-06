@@ -388,38 +388,47 @@ def denoise_w_bsrnn(dirpath, cfg, output_dir=None):
                         _, output = model({"audio": {"mixture": audio},})
                         return output["audio"]
                     
-                    if audio.shape[-1] / sr > 5:
-                        speech_segments = []
-                        segment_len = sr * 5
-                        amount_of_segments = audio.shape[-1] // segment_len
-                        for i in tqdm(range(amount_of_segments), total=amount_of_segments):
-                            start = i * segment_len
-                            segment = audio[..., start : start + segment_len]
-                            segmet = segment.unsqueeze(0)
-                            output = forward(segmet)
+                    if audio.shape[-1] / sr > cfg["max_len"]:
+                        if cfg["use_fader"]:
+                            audio = audio.unsqueeze(0)
+                            fader = OverlapAddFader(window_type=cfg["window_type"],
+                                                    chunk_size_second=cfg["chunk_size_second"],
+                                                    hop_size_second=cfg["hop_size_second"],
+                                                    fs=sr,
+                                                    batch_size=cfg["batch_size"])
+                            
+                            output = fader(audio, lambda a: forward(a))
+
                             speech = output["speech"]
                             speech = speech.reshape(1, -1)
                             speech = speech.to("cpu")
-                            speech_segments.append(speech)
+
                         
-                        final_segment_l = audio.shape[-1] - amount_of_segments * segment_len
-                        if final_segment_l > 0:
-                            segment = audio[..., -final_segment_l:]
-                            segmet = segment.unsqueeze(0)
-                            output = forward(segmet)
-                            speech = output["speech"]
-                            speech = speech.reshape(1, -1)
-                            speech = speech.to("cpu")
-                            speech_segments.append(speech)
-                        
-                        speech = torch.cat(speech_segments, dim=-1)
-                        # fader = OverlapAddFader(window_type=cfg["window_type"],
-                        #                         chunk_size_second=cfg["chunk_size_second"],
-                        #                         hop_size_second=cfg["hop_size_second"],
-                        #                         fs=sr,
-                        #                         batch_size=cfg["batch_size"])
-                        
-                        # output = fader(audio, lambda a: forward(a))
+                        else:
+                            speech_segments = []
+                            segment_len = sr * cfg["max_len"]
+                            amount_of_segments = audio.shape[-1] // segment_len
+                            for i in tqdm(range(amount_of_segments), total=amount_of_segments):
+                                start = i * segment_len
+                                segment = audio[..., start : start + segment_len]
+                                segmet = segment.unsqueeze(0)
+                                output = forward(segmet)
+                                speech = output["speech"]
+                                speech = speech.reshape(1, -1)
+                                speech = speech.to("cpu")
+                                speech_segments.append(speech)
+                            
+                            final_segment_l = audio.shape[-1] - amount_of_segments * segment_len
+                            if final_segment_l > 0:
+                                segment = audio[..., -final_segment_l:]
+                                segmet = segment.unsqueeze(0)
+                                output = forward(segmet)
+                                speech = output["speech"]
+                                speech = speech.reshape(1, -1)
+                                speech = speech.to("cpu")
+                                speech_segments.append(speech)
+                            
+                            speech = torch.cat(speech_segments, dim=-1)
                         
                     else:
                         audio = audio.unsqueeze(0)
@@ -485,7 +494,9 @@ if __name__ == "__main__":
         "window_type": "hann",
         "chunk_size_second": 6.0,
         "hop_size_second": 0.5,
-        "batch_size": 4
+        "batch_size": 4,
+        "use_fader" : False,
+        "max_len" : 5.0
     }
 
     dirpath = "/home/comp/Рабочий стол/AutoDub/output/dataset/sherlock-1/eng/sherlock-1_audio_2_eng_speech/segments"

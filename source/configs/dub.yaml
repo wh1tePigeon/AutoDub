@@ -15,6 +15,8 @@ bsrnn:
   chunk_size_second: 6.0
   hop_size_second: 0.5
   batch_size: 4
+  use_fader: False
+  max_len: 5.0
 
 vad:
   sr: 16000
