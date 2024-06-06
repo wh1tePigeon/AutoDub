@@ -1,15 +1,10 @@
 import torch
 import torchaudio as ta
-import torch.nn.functional as F
 import os
-from typing import Tuple
-import librosa
 import pandas as pd
 from tqdm import tqdm
-import ffmpeg
 import json
 import shutil
-import pysrt
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
@@ -20,9 +15,7 @@ from speechbrain.inference.speaker import EncoderClassifier
 from sklearn.cluster import DBSCAN, KMeans
 from sklearn.preprocessing import StandardScaler
 from hydra.utils import instantiate
-from scipy.spatial.distance import cdist
 import numpy as np
-from source.utils.util import prepare_device
 from source.utils.fader import OverlapAddFader
 from omegaconf import OmegaConf
 from sklearn.manifold import TSNE

@@ -99,19 +99,3 @@ if __name__ == "__main__":
     # t2 = "/home/comp/Рабочий стол/AutoDub/output/asr/1_mono_speech_resampled/1_mono_speech_resampled_asr.csv"
     # t1 = "/home/comp/Рабочий стол/AutoDub/output/vad/1_mono_speech_resampled/1_mono_speech_resampled.wav"
     #_, _ , embs = get_embeddings(t1, t2)
-
-
-
-
-    # from pyannote.audio import Pipeline
-    # pipeline = Pipeline.from_pretrained(
-    #     "pyannote/speaker-diarization-3.1",
-    #     use_auth_token="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")
-
-
-    # # apply pretrained pipeline
-    # diarization = pipeline("/home/comp/Рабочий стол/AutoDub/output/tmp/tmp.wav")
-
-    # # print the result
-    # for turn, _, speaker in diarization.itertracks(yield_label=True):
-    #     print(f"start={turn.start:.1f}s stop={turn.end:.1f}s speaker_{speaker}")

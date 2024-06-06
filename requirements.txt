@@ -30,3 +30,4 @@ pydub
 openai-whisper
 ffmpeg-python
 pysrt
+opencv_python

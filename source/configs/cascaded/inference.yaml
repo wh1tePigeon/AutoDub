@@ -4,4 +4,4 @@ defaults:
 
 name: main
 n_gpu: 1
-checkpoint_path: "$ROOT/checkpoints/cascade/baseline.pth"
+checkpoint_path: "$ROOT/checkpoints/cascaded/baseline.pth"

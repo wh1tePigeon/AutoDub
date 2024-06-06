@@ -82,9 +82,9 @@ def inference_cascaded(cfg):
 
 if __name__ == "__main__":
     cfg = {
-        "checkpoint_path" : "/home/comp/Рабочий стол/Mashup/checkpoints/cascaded/baseline.pth",
-        "filepath" : "/home/comp/Рабочий стол/Mashup/input/test_2.wav",
-        "output_dir" : "/home/comp/Рабочий стол/Mashup/output",
+        "checkpoint_path" : "/home/comp/Рабочий стол/AutoDub/checkpoints/cascaded/baseline.pth",
+        "filepath" : "/home/comp/Рабочий стол/AutoDub/input/test_2.wav",
+        "output_dir" : "/home/comp/Рабочий стол/AutoDub/output",
         "hop_length" : 1024,
         "n_fft" : 2048,
         "batchsize" : 4,

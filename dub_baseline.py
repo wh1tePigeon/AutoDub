@@ -5,7 +5,7 @@ import argparse
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent))
 from source.utils.util import CONFIGS_PATH, resolve_paths
-from source.inference import inference_bsrnn, inference_vad, inference_asr, translate_file_google, lazy_tts
+from source.inference import inference_bsrnn, inference_vad, inference_asr, translate_file, lazy_tts
 from source.utils.process_audio import cut_n_save, separate_audio_n_video, align_audio_length, concat_segments
 
 #FILEPATH = "$ROOT/input/test.mp4"
@@ -51,7 +51,7 @@ def dub(cfg):
 
     print("Translating")
     cfg["tr"]["filepath"] = transcribed_path
-    translated_csv_path = translate_file_google(cfg["tr"])
+    translated_csv_path = translate_file(cfg["tr"])
 
     print("Cutting audio")
     cfg["cut"]["filepath"] = cfg["asr"]["filepath"]

@@ -32,7 +32,6 @@ def inference_bsrnn(cfg):
 
     if os.path.isfile(filepath):
         audio, filepath = load_n_process_audio(filepath, output_dir, sr)
-        #audio = audio.reshape(1, 1, -1)
   
         # move audio to gpu
         audio = audio.to(device)
