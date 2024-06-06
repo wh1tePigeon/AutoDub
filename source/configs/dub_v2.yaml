@@ -1,4 +1,4 @@
-filepath: "$ROOT/input/test2.mp4"
+filepath:
 
 separate_audio:
   filepath:
@@ -26,14 +26,19 @@ asr_wtime:
   checkpoint_path: "$ROOT/checkpoints/asr/whisper"
 
 diarize:
-  audio_filepath: "$ROOT/output/asr/test2_audio_mono_speech_resampled/test2_audio_mono_speech_resampled.wav"
-  csv_filepath: "$ROOT/output/asr/test2_audio_mono_speech_resampled/test2_audio_mono_speech_resampled_asr.csv"
+  audio_filepath:
+  csv_filepath:
   output_dir: "$ROOT/output/label"
-  cluster_type: "dbscan"
+  cluster_type: "kmeans"
   cluster_cfg:
-    metric: "cosine"
-    eps: 0.75
-    min_samples: 1
+    n_clusters: 6
+  # cluster_type: "dbscan"
+  # cluster_cfg:
+  #   metric: "cosine"
+  #   eps:
+  #   min_samples:
+
+
   
 tr:
   filepath:

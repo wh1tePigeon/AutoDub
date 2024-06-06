@@ -22,8 +22,6 @@ def get_embeddings(audio_filepath, csv_filepath):
     classifier = EncoderClassifier.from_hparams(source="speechbrain/spkrec-ecapa-voxceleb")
     embeddings = []
 
-    #new_raw_wav = torch.empty(1,0)
-
     for _, row in tqdm(df.iterrows(), total=len(df.index)):
         start_time = row["start"]
         end_time = row["end"]
@@ -34,14 +32,6 @@ def get_embeddings(audio_filepath, csv_filepath):
         segment = audio[..., start:end]
         embedding = classifier.encode_batch(segment).squeeze()
         embeddings.append(embedding)
-
-        #new_raw_wav = torch.cat((new_raw_wav, segment), dim=-1)
-        #zeros = torch.zeros(1, 3 * sr) # 3 sec silence between speech
-        #new_raw_wav = torch.cat((new_raw_wav, zeros), dim=-1)
-
-    #tmp = "/home/comp/Рабочий стол/AutoDub/output/tmp/tmp.wav"
-    #ta.save(tmp, new_raw_wav, sample_rate=sr)
-
     
     embeddings = torch.stack(embeddings)
     return [audio_filepath, csv_filepath, embeddings]
