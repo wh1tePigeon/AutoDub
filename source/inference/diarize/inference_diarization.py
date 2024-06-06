@@ -10,6 +10,7 @@ from speechbrain.inference.speaker import EncoderClassifier
 import pandas as pd
 from sklearn.cluster import DBSCAN, KMeans
 from sklearn.preprocessing import StandardScaler
+from tqdm import tqdm
 
 
 def get_embeddings(audio_filepath, csv_filepath):
@@ -23,7 +24,7 @@ def get_embeddings(audio_filepath, csv_filepath):
 
     #new_raw_wav = torch.empty(1,0)
 
-    for _, row in df.iterrows():
+    for _, row in tqdm(df.iterrows(), total=len(df.index)):
         start_time = row["start"]
         end_time = row["end"]
 

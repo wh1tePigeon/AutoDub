@@ -9,16 +9,17 @@ from source.utils.util import prepare_device
 from source.utils.process_audio import load_n_process_audio
 from source.utils.fader import OverlapAddFader
 from omegaconf import OmegaConf
-import tqdm
+from tqdm import tqdm
 
 
 def inference_bsrnn(cfg):
-    device, device_ids = prepare_device(cfg["n_gpu"])
+    #device, device_ids = prepare_device(cfg["n_gpu"])
+    device = "cuda" if torch.cuda.is_available() else "cpu"
     arch = OmegaConf.load(cfg["model"])
     model = instantiate(arch)
     model = model.to(device)
-    if len(device_ids) > 1:
-        model = torch.nn.DataParallel(model, device_ids=device_ids)
+    # if len(device_ids) > 1:
+    #     model = torch.nn.DataParallel(model, device_ids=device_ids)
 
     checkpoint = torch.load(cfg["checkpoint_path"], map_location=device)
     state_dict = checkpoint["state_dict"]
@@ -31,7 +32,7 @@ def inference_bsrnn(cfg):
 
     if os.path.isfile(filepath):
         audio, filepath = load_n_process_audio(filepath, output_dir, sr)
-        audio = audio.reshape(1, 1, -1)
+        #audio = audio.reshape(1, 1, -1)
   
         # move audio to gpu
         audio = audio.to(device)
@@ -59,8 +60,8 @@ def inference_bsrnn(cfg):
                 
                 else:
                     speech_segments = []
-                    segment_len = sr * cfg["max_len"]
-                    amount_of_segments = audio.shape[-1] // segment_len
+                    segment_len = int(sr * cfg["max_len"])
+                    amount_of_segments = int(audio.shape[-1] // segment_len)
                     for i in tqdm(range(amount_of_segments), total=amount_of_segments):
                         start = i * segment_len
                         segment = audio[..., start : start + segment_len]

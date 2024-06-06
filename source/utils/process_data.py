@@ -406,8 +406,8 @@ def denoise_w_bsrnn(dirpath, cfg, output_dir=None):
                         
                         else:
                             speech_segments = []
-                            segment_len = sr * cfg["max_len"]
-                            amount_of_segments = audio.shape[-1] // segment_len
+                            segment_len = int(sr * cfg["max_len"])
+                            amount_of_segments = int(audio.shape[-1] // segment_len)
                             for i in tqdm(range(amount_of_segments), total=amount_of_segments):
                                 start = i * segment_len
                                 segment = audio[..., start : start + segment_len]
