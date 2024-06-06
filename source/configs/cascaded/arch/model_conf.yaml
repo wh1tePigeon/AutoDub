@@ -1,0 +1,6 @@
+_target_: source.model.CascadedNet
+n_fft: 2048
+hop_length: 1024
+nout: 32
+nout_lstm: 128
+is_complex: False

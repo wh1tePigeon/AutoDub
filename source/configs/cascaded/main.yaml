@@ -1,0 +1,14 @@
+defaults:
+  - arch: model_conf
+# - augmentations: aug
+  - dataset: datas
+  - loss: loss_conf
+  - scheduler: scheduler_conf
+#  - metrics: metrics_conf
+#  - preprocessing: preprocessing_conf
+  - trainer: trainer_conf
+  - optimizer: optimizer_conf
+
+name: cascaded
+n_gpu: 1
+checkpoint:
