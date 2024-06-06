@@ -113,4 +113,18 @@ def inference_bsrnn(cfg):
 
 
 if __name__ == "__main__":
-    inference_bsrnn()
+    cfg = {
+        "n_gpu": 1,
+        "model": "/home/comp/Рабочий стол/AutoDub/source/configs/bsrnn/arch/model_conf.yaml",
+        "sr": 44100,
+        "output_dir": "/home/comp/Рабочий стол/AutoDub/output/bsrnn",
+        "checkpoint_path": "/home/comp/Рабочий стол/AutoDub/checkpoints/bsrnn/main.pth",
+        "window_type": "hann",
+        "chunk_size_second": 6.0,
+        "hop_size_second": 0.5,
+        "batch_size": 4,
+        "use_fader" : False,
+        "max_len" : 5.0
+    }
+
+    inference_bsrnn(cfg)
