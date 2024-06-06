@@ -15,7 +15,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 from source.utils.process_mkv import process_mkv_dir, srt_to_csv
 from source.utils.process_audio import cut_n_save
-
+import matplotlib.pyplot as plt
 from speechbrain.inference.speaker import EncoderClassifier
 from sklearn.cluster import DBSCAN, KMeans
 from sklearn.preprocessing import StandardScaler
@@ -25,6 +25,7 @@ import numpy as np
 from source.utils.util import prepare_device
 from source.utils.fader import OverlapAddFader
 from omegaconf import OmegaConf
+from sklearn.manifold import TSNE
 
 
 def process_data_dir(metafilepath, output_dir):
@@ -99,18 +100,24 @@ def compute_embeddings(metafilepath):
                 for i, row in tqdm(df.iterrows(), total=len(df.index)):
                     segment_path = row["path"]
                     if os.path.exists(segment_path):
-                        try:
-                            segment, sr = ta.load(segment_path)
-                            embedding = classifier.encode_batch(segment).squeeze().cpu().numpy()
+                        #try:
+                        segment, sr = ta.load(segment_path)
 
-                            filename = segment_path.split(".")[0].split("/")[-1]
-                            savepath = os.path.join(output_dir, (filename + "_embd.npy"))
-                            np.save(savepath, embedding, allow_pickle=False)
+                        length = sr * 5
+                        while segment.shape[-1] < length:
+                            segment = segment.repeat((1, 2))
+                        segment = segment[:length]
 
-                            df.at[i, "embd_path"] = savepath
+                        embedding = classifier.encode_batch(segment).squeeze().cpu().numpy()
 
-                        except:
-                            pass
+                        filename = segment_path.split(".")[0].split("/")[-1]
+                        savepath = os.path.join(output_dir, (filename + "_embd.npy"))
+                        np.save(savepath, embedding, allow_pickle=False)
+
+                        df.at[i, "embd_path"] = savepath
+
+                        #except:
+                        #    pass
 
                 df.to_csv(csv_segments_filepath, sep=';', index=False, encoding='utf-8')
               
@@ -133,6 +140,11 @@ def compute_average_embd(dirpath, output_dir=None):
             filepath = os.path.join(dirpath, filename)
             try:
                 audio, sr = ta.load(filepath)
+                length = sr * 5
+                while audio.shape[-1] < length:
+                    audio = audio.repeat((1, 2))
+                audio = audio[:length]
+
                 embedding = classifier.encode_batch(audio).squeeze().cpu()
                 embedding = embedding / embedding.norm()
                 embds.append(embedding)
@@ -145,48 +157,6 @@ def compute_average_embd(dirpath, output_dir=None):
     np.save(savepath, average, allow_pickle=False)
 
     return savepath
-
-
-def cosine_distance(X1, X2):
-    return cdist(X1, X2, 'cosine')[0][0]
-
-
-class DBSCANCosine:
-    def __init__(self, eps=0.6, min_samples=5):
-        self.eps = eps
-        self.min_samples = min_samples
-    
-    def fit(self, X):
-        n_points = len(X)
-        labels = np.zeros(n_points, dtype=np.int32)
-        cluster_id = 0
-        
-        for point_index in range(n_points):
-            if labels[point_index]!= 0:
-                continue
-            
-            neighbors = []
-            for neighbor_index in range(n_points):
-                if point_index == neighbor_index:
-                    continue
-                
-                distance = cosine_distance(X[point_index].reshape(1, -1), X[neighbor_index].reshape(1, -1))
-                
-                if distance > self.eps:
-                    neighbors.append(neighbor_index)
-            
-            if len(neighbors) >= self.min_samples:
-                labels[neighbors] = cluster_id
-                cluster_id += 1
-
-                # for neighbor_index in neighbors:
-                #     if labels[neighbor_index] == 0:
-                #         new_neighbors = [n for n in neighbors if cosine_distance(X[neighbor_index].reshape(1, -1), X[n].reshape(1, -1)) > self.eps]
-                #         if len(new_neighbors) >= self.min_samples:
-                #             labels[new_neighbors] = cluster_id
-                #             cluster_id += 1
-        return labels
-                            
 
 
 def label_embds(metafilepath):
@@ -218,10 +188,13 @@ def label_embds(metafilepath):
                 similarity = torch.nn.CosineSimilarity(dim=-1, eps=1e-6)
                 for i in range(0, len(embds)):
                     s = similarity(embds[i], av).item()
-                    if s >= 0.82:
-                        print(i)
-                        sims.append(i)
-
+                    # if s >= 0.82:
+                    #     print(i)
+                    #     sims.append(i)
+                    print(s)
+                    sims.append(s)
+#[0.8266801834106445, 0.32945743203163147, 0.3529875874519348, 0.8052789568901062, 0.8455470204353333, 0.75927734375, 0.6174770593643188, 0.6860861778259277, 0.7241779565811157, 0.6331973671913147, 0.46065205335617065, 0.5581662058830261, 0.46521076560020447, 0.6145764589309692, 0.7923034429550171, 0.4812324345111847, 0.466068297624588, 0.4515424966812134, 0.630854070186615, 0.7734777331352234, 0.547701358795166, 0.5852850079536438, 0.6588780283927917, 0.7631874680519104, 0.849473237991333, 0.6410998106002808, 0.33886298537254333, 0.8477728962898254, 0.6053104400634766, 0.3854694366455078, 0.49065667390823364, 0.8486816883087158, 0.6654967665672302, 0.8602281212806702, 0.879890501499176, 0.8036215305328369, 0.5881752967834473, 0.7215709686279297, 0.8454853296279907, 0.8472471833229065, 0.8986798524856567, 0.8897603154182434, 0.8348680138587952, 0.90785813331604, 0.8161273002624512, 0.8514300584793091, 0.8161734938621521, 0.8842065930366516, 0.7813353538513184, 0.7326693534851074, 0.7978399991989136, 0.9117340445518494, 0.7917256355285645, 0.7339353561401367, 0.421723872423172, 0.507701575756073, 0.7721047401428223, 0.8849628567695618, 0.4524296820163727, ...]
+#[0.8380637168884277, 0.3404485583305359, 0.36333268880844116, 0.8104907274246216, 0.8716908097267151, 0.7617074251174927, 0.5878381729125977, 0.6911765933036804, 0.7610287666320801, 0.6427096128463745, 0.4633987545967102, 0.5655509233474731, 0.47162437438964844, 0.6182215809822083, 0.799545168876648, 0.49164044857025146, 0.4401336908340454, 0.46386775374412537, 0.6322476863861084, 0.7752927541732788, 0.539119303226471, 0.5917537212371826, 0.6736828684806824, 0.7557857036590576, 0.8324512243270874, 0.651569664478302, 0.3289244771003723, 0.8483772277832031, 0.6365922689437866, 0.3807176351547241, 0.5081520676612854, 0.8404320478439331, 0.6620064377784729, 0.8616255521774292, 0.8839561343193054, 0.8130156993865967, 0.6084023714065552, 0.7230969071388245, 0.8678513169288635, 0.8331003785133362, 0.9027376770973206, 0.8962419629096985, 0.845528244972229, 0.908155083656311, 0.8136807084083557, 0.8465657830238342, 0.8038439154624939, 0.8839699029922485, 0.7736802101135254, 0.7331521511077881, 0.7912930846214294, 0.9070671796798706, 0.8307721614837646, 0.7289974689483643, 0.4222258925437927, 0.5199717879295349, 0.7740427255630493, 0.8852272033691406, 0.48075032234191895, ...]
                 embds = torch.stack(embds)
                 #clustering = DBSCAN(metric="cosine", eps=0.4, min_samples=10).fit(embds)
                 #labels = clustering.labels_
@@ -464,6 +437,29 @@ def denoise_w_bsrnn(dirpath, cfg, output_dir=None):
     return output_dir
 
 
+def visualize_embeddings(dirpath):
+    assert os.path.exists(dirpath)
+
+    embds = []
+
+    for filename in tqdm(os.listdir(dirpath), total=len(os.listdir(dirpath))):
+        if filename.endswith(".npy"):
+            filepath = os.path.join(dirpath, filename)
+            try:
+                embedding = np.load(filepath)
+                #embedding = embedding / embedding.norm()
+                embds.append(embedding)
+            except:
+                pass
+    
+    embds = np.vstack(embds)
+    tsne = TSNE(n_components=2, random_state=0, perplexity=len(embds)-1)
+    two_d_embeddings = tsne.fit_transform(embds)
+
+    plt.figure(figsize=(128, 128))
+    plt.scatter(two_d_embeddings[:, 0], two_d_embeddings[:, 1])
+    plt.title('t-SNE Visualization of Embeddings')
+    plt.show()
 
 
 
@@ -498,3 +494,6 @@ if __name__ == "__main__":
     #denoise_w_bsrnn(dirpath2, config_dict)#, output_dir)
     #compute_average_embd("/home/comp/Рабочий стол/bk")
     
+    embds_orig = "/home/comp/Рабочий стол/embds"
+    embds_padd = "/home/comp/Рабочий стол/AutoDub/output/dataset/sherlock-1/eng/sherlock-1_audio_2_eng_speech/embds"
+    #visualize_embeddings(embds_padd)
