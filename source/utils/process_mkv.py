@@ -85,7 +85,7 @@ def process_mkv_dir(dirpath, output_dir, languages, extract_srt=True, extract_vi
         filepath = os.path.join(dirpath, filename)
         if os.path.isfile(filepath):
             ext = filename.split(".")[-1]
-            if ext == "mkv":
+            if ext == "mkv" or ext == "m4v":
                 print("Processing " + filename)
                 out_path = os.path.join(output_dir, filename.split(".")[0])
                 video_paths, for_each_lang = process_mkv_file(filepath, out_path,
@@ -140,9 +140,9 @@ if __name__ == "__main__":
     }
 
     cfg2 = {
-        "dirpath" : "/home/comp/Рабочий стол/Sherlock",
+        "dirpath" : "/home/comp/Рабочий стол/bbt",
         "languages": ["eng", "rus"],
-        "output_dir" : "/home/comp/Рабочий стол/AutoDub/output/ffmpeg"
+        "output_dir" : "/home/comp/Рабочий стол/AutoDub/output/bbttest2"
     }
 
     cfg3 = {

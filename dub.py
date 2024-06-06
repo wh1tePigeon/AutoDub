@@ -8,7 +8,7 @@ from source.inference import inference_bsrnn, inference_asr_wtime, translate_fil
 from source.utils.process_audio import cut_n_save_by_label, separate_audio_n_video, align_audio_length, concat_segments
 
 #FILEPATH = "$ROOT/input/test.mp4"
-FILEPATH = ""#"$ROOT/input/1.wav"
+FILEPATH = "$ROOT/input/test2_full_audio_4_eng.wav"
 
 @hydra.main(config_path=str(CONFIGS_PATH), config_name="dub_v2")
 def dub(cfg):
