@@ -65,8 +65,8 @@ python download_checkpoints.py
     ├── trainer                  <- model`s train pipelines
     ├── train_model              <- initiate model`s train pipelines
     └── utils                    <- utils
-
-##Credits
+```
+#Credits
 
 This repository is based on a heavily modified fork
 of [hw template](https://github.com/WrathOfGrapes/asr_project_template) repository.
