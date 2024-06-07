@@ -1,5 +1,8 @@
 # Overview
 This project aims to use various deep learning models to perform automatic dubbing from english to russian language. The general pipeline looks like this:
+<p align="center">
+<img src="docs/pipe.png" alt="Overall pipeline"
+width="800px"></p>
 
 # Installation guide
 ## Clone this repo:
