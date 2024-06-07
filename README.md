@@ -40,3 +40,28 @@ python download_checkpoints.py
 ```
 
 # Repo structure:
+```shell
+├── README.md             <- Top-level README.
+├── requirements.txt      <- project requirements.
+├── dub_baseline.py       <- baseline dubbing code.
+├── dub.py                <- Improved dubbing code.
+├── download_checkpoints.py   <- script for downloading necessary checkpoints.
+│
+├── input                 <- input test examples.
+├── docs                  <- main repo docs. 
+│   
+│
+└── source                   <- main code directory.
+    ├── augmentations            <- data augmintation functions
+    ├── base                     <- base classes
+    ├── configs                  <- necessary configs
+    ├── datasets                 <- necessary datasets
+    ├── inference                <- main inference functions
+    ├── logger                   <- supportive logger
+    ├── loss                     <- model`s losses
+    ├── metric                   <- model`s metrics  
+    ├── model                    <- model`s architectures
+    ├── text_encoder             <- DS2 text encoders
+    ├── trainer                  <- model`s train pipelines
+    ├── train_model              <- initiate model`s train pipelines
+    └── utils                    <- utils
