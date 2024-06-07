@@ -117,6 +117,7 @@ if __name__ == "__main__":
         "n_gpu": 1,
         "model": "/home/comp/Рабочий стол/AutoDub/source/configs/bsrnn/arch/model_conf.yaml",
         "sr": 44100,
+        "filepath" : "/home/comp/Рабочий стол/AutoDub/input/3.wav",
         "output_dir": "/home/comp/Рабочий стол/AutoDub/output/bsrnn",
         "checkpoint_path": "/home/comp/Рабочий стол/AutoDub/checkpoints/bsrnn/main.pth",
         "window_type": "hann",

@@ -475,7 +475,7 @@ if __name__ == "__main__":
     #merge_sim_segments(meta_path)
     #remove_dialogues_n_small_segments(csv_path)
     #compute_embeddings(meta_path)
-    label_embds(meta_path)
+    #label_embds(meta_path)
     #group_by_label(meta_path)
     #process_data_dir(**cfg)
 
@@ -500,4 +500,4 @@ if __name__ == "__main__":
     
     embds_orig = "/home/comp/Рабочий стол/embds"
     embds_padd = "/home/comp/Рабочий стол/AutoDub/output/dataset/sherlock-1/eng/sherlock-1_audio_2_eng_speech/embds"
-    #visualize_embeddings(embds_padd)
+    visualize_embeddings(embds_padd)
