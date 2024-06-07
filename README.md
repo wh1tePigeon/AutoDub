@@ -122,3 +122,18 @@ of [hw template](https://github.com/WrathOfGrapes/asr_project_template) reposito
       primaryClass={cs.CL}
 }
 ```
+
+## Whisper
+[Repository](https://github.com/openai/whisper) 
+[Paper](https://arxiv.org/abs/2212.04356)
+
+```
+@misc{radford2022robust,
+      title={Robust Speech Recognition via Large-Scale Weak Supervision}, 
+      author={Alec Radford and Jong Wook Kim and Tao Xu and Greg Brockman and Christine McLeavey and Ilya Sutskever},
+      year={2022},
+      eprint={2212.04356},
+      archivePrefix={arXiv},
+      primaryClass={eess.AS}
+}
+```
