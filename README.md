@@ -69,7 +69,7 @@ python download_checkpoints.py
 
 # Credits
 This repository is based on a heavily modified fork
-of [hw template](https://github.com/WrathOfGrapes/asr_project_template) repository.
+of [pytorch template](https://github.com/victoresque/pytorch-template) repository.
 
 ## Cascaded
 [Repository](https://github.com/tsurumeso/vocal-remover)
